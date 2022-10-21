@@ -65,9 +65,6 @@ torch::nn::Sequential make_layers(const std::vector<int> &cfg, bool batch_norm)
     return layers;
 }
 
-const std::vector<int> cfg_D = {
-    64, 64, -1 /* stands for M */, 128, 128, -1, 256, 256, 256, -1, 512, 512, 512, -1, 512, 512, 512, -1};
-
 VGG make_vgg16(int num_classes, bool pretrained)
 {
     return VGG(make_layers(cfg_D, false), num_classes, !pretrained);
