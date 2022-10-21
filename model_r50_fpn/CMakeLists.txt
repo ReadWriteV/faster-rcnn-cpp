@@ -1,6 +1,7 @@
+set(TARGET_NAME model_r50_fpn)
+
 add_library(
-    r50_fpn_model STATIC
-    backbone.cpp
+    ${TARGET_NAME} STATIC
     neck.cpp
     anchor.cpp
     bbox.cpp
@@ -11,8 +12,8 @@ add_library(
     trainer.cpp
 )
 
-set_target_properties(r50_fpn_model PROPERTIES CXX_STANDARD 17)
-target_include_directories(r50_fpn_model PUBLIC ${PROJECT_SOURCE_DIR}/model)
-target_link_libraries(r50_fpn_model PUBLIC cvops utils dataset ${TORCH_LIBRARIES} ${OpenCV_LIBRARIES} Boost::headers)
+set_target_properties(${TARGET_NAME} PROPERTIES CXX_STANDARD 17)
+target_include_directories(${TARGET_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/model)
+target_link_libraries(${TARGET_NAME} PUBLIC cvops utils dataset backbone ${TORCH_LIBRARIES} ${OpenCV_LIBRARIES} Boost::headers)
 
 

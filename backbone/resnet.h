@@ -1,7 +1,5 @@
 #pragma once
 
-#include "utils.h"
-
 #include <boost/property_tree/ptree.hpp>
 #include <vector>
 
@@ -9,17 +7,14 @@
 
 namespace backbone
 {
-// define Backbone class
-struct Backbone : torch::nn::Module
-{
-    virtual std::vector<torch::Tensor> forward(torch::Tensor x)
-    {
-        throw std::runtime_error("Please implement backbone's forward method.");
-    }
-};
-
 // freeze a module by setting requires_grad = False
 void freeze_module(torch::nn::Module *ptr);
+
+// define Backbone class
+struct Resnet : torch::nn::Module
+{
+    virtual std::vector<torch::Tensor> forward(torch::Tensor x) = 0;
+};
 
 template <typename Block>
 struct ResNetImpl;
@@ -66,7 +61,7 @@ struct Bottleneck : torch::nn::Module
 }; // Bottleneck
 
 template <typename Block>
-struct ResNetImpl : Backbone
+struct ResNetImpl : Resnet
 {
     int64_t groups, base_width, inplanes, frozen_stages;
     torch::nn::Conv2d conv1;
@@ -221,5 +216,5 @@ TORCH_MODULE(ResNext101_32x8d);
 /// @brief build default backbone resnet50
 /// @param frozen_stages num of frozen stages
 /// @return built backbone
-std::shared_ptr<Backbone> build_backbone(const boost::property_tree::ptree &backbone_opts);
+std::shared_ptr<Resnet> build_resnet(const boost::property_tree::ptree &backbone_opts);
 } // namespace backbone

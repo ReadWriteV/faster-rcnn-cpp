@@ -9,7 +9,7 @@ FasterRCNNImpl::FasterRCNNImpl(const boost::property_tree::ptree &backbone_opts,
     : _backbone_opts(backbone_opts), _fpn_opts(fpn_opts), _rpn_opts(rpn_opts), _rcnn_opts(rcnn_opts)
 {
     // building backbones is different as it allows different types of resnet
-    _backbone = backbone::build_backbone(_backbone_opts);
+    _backbone = backbone::build_resnet(_backbone_opts);
     _neck = neck::FPN(_fpn_opts);
     _rpn_head = rpn_head::RPNHead(_rpn_opts);
     _rcnn_head = rcnn_head::RCNNHead(_rcnn_opts);

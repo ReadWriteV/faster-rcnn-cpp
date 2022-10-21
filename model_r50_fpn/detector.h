@@ -1,9 +1,9 @@
 #pragma once
 
-#include "backbone.h"
 #include "example.h"
 #include "neck.h"
 #include "rcnn_head.h"
+#include "resnet.h"
 #include "rpn_head.h"
 
 #include <boost/property_tree/ptree.hpp>
@@ -29,7 +29,7 @@ class FasterRCNNImpl : public torch::nn::Module
     const boost::property_tree::ptree &_rpn_opts;
     const boost::property_tree::ptree &_rcnn_opts;
 
-    std::shared_ptr<backbone::Backbone> _backbone{nullptr};
+    std::shared_ptr<backbone::Resnet> _backbone{nullptr};
     neck::FPN _neck{nullptr};
     rpn_head::RPNHead _rpn_head{nullptr};
     rcnn_head::RCNNHead _rcnn_head{nullptr};

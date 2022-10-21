@@ -1,4 +1,5 @@
-#include "backbone.h"
+#include "resnet.h"
+
 #include <cassert>
 #include <string>
 
@@ -181,7 +182,7 @@ ResNext101_32x8dImpl::ResNext101_32x8dImpl(int frozen_stages) : ResNetImpl({3, 4
 }
 
 // build backbone(resnet series) from "type" keyword in opts
-std::shared_ptr<Backbone> build_backbone(const boost::property_tree::ptree &backbone_opts)
+std::shared_ptr<Resnet> build_resnet(const boost::property_tree::ptree &backbone_opts)
 {
     if (auto backbone_type = backbone_opts.get<std::string>("type"); backbone_type == "resnet50")
     {

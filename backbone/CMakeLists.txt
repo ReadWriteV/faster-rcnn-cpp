@@ -1,6 +1,7 @@
 add_library(
     backbone STATIC
     vgg.cpp
+    resnet.cpp
 )
 
 set_target_properties(backbone PROPERTIES CXX_STANDARD 17)
