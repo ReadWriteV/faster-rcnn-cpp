@@ -1,0 +1,19 @@
+# Editor Specific
+.vscode
+
+# Build Directory
+build
+
+# Clangd Cache
+.cache
+
+# Model Files
+non_difficult
+work_dir
+r50_fpn_voc_best
+
+# Data Files
+data
+
+# Python Cache
+__pycache__
