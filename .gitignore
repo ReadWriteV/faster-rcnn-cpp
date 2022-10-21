@@ -7,10 +7,8 @@ build
 # Clangd Cache
 .cache
 
-# Model Files
-non_difficult
-work_dir
-r50_fpn_voc_best
+# Model Output Files
+output
 
 # Data Files
 data
