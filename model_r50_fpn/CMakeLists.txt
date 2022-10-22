@@ -13,7 +13,7 @@ add_library(
 )
 
 set_target_properties(${TARGET_NAME} PROPERTIES CXX_STANDARD 17)
-target_include_directories(${TARGET_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/model)
+target_include_directories(${TARGET_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(${TARGET_NAME} PUBLIC cvops utils dataset backbone ${TORCH_LIBRARIES} ${OpenCV_LIBRARIES} Boost::headers)
 
 
