@@ -168,7 +168,7 @@ void VOCDataset::transform(ExampleType &example, cv::Mat &image_data)
 
     // cv2::mat to torch tensor
     example.data = torch::from_blob(img.data, {img.rows, img.cols, 3}, torch::kFloat32);
-    example.data = example.data.permute({2, 0, 1}).unsqueeze(0).contiguous();
+    example.data = example.data.permute({2, 0, 1}).unsqueeze(0).contiguous(); // unsqueeze(0), so size is [1, c, h, w]
 }
 
 std::pair<cv::Mat, float> rescale_image(cv::Mat img, std::vector<float> img_scale)
