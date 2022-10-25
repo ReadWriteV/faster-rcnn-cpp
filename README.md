@@ -85,4 +85,29 @@ AP for tvmonitor = 0.7538
 Mean AP = 0.7010
 ```
 
+Result of VGG-feature + VGG-classify + old-RPN
+
+```
+aeroplane   : AP = 0.6190, PRE = 0.2212, REC = 0.7754
+bicycle     : AP = 0.6978, PRE = 0.2364, REC = 0.8783
+bird        : AP = 0.6119, PRE = 0.2516, REC = 0.7495
+boat        : AP = 0.4434, PRE = 0.1176, REC = 0.7871
+bottle      : AP = 0.3458, PRE = 0.1595, REC = 0.5352
+bus         : AP = 0.6788, PRE = 0.1664, REC = 0.9108
+car         : AP = 0.7422, PRE = 0.2731, REC = 0.8426
+cat         : AP = 0.7405, PRE = 0.3226, REC = 0.8715
+chair       : AP = 0.3686, PRE = 0.1081, REC = 0.7222
+cow         : AP = 0.6950, PRE = 0.2007, REC = 0.8975
+diningtable : AP = 0.5186, PRE = 0.1034, REC = 0.8495
+dog         : AP = 0.7578, PRE = 0.2607, REC = 0.9121
+horse       : AP = 0.7637, PRE = 0.2305, REC = 0.9023
+motorbike   : AP = 0.7038, PRE = 0.2657, REC = 0.8462
+person      : AP = 0.7207, PRE = 0.3107, REC = 0.8357
+pottedplant : AP = 0.3222, PRE = 0.0976, REC = 0.6458
+sheep       : AP = 0.5389, PRE = 0.2365, REC = 0.7438
+sofa        : AP = 0.5286, PRE = 0.1366, REC = 0.8996
+train       : AP = 0.6922, PRE = 0.1896, REC = 0.8901
+tvmonitor   : AP = 0.6377, PRE = 0.1815, REC = 0.8084
+Mean AP = 0.6064
+```
 # Acknol

@@ -15,7 +15,7 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &back
                                          const boost::property_tree::ptree &rcnn_opts)
 {
     assert(backbone_opts.get<std::string>("type") == "vgg16");
-    auto vgg16 = backbone::VGG(1000, false);
+    auto vgg16 = backbone::make_vgg16(1000, true);
 
     rpn = rpn_head::RPNHead(rpn_opts);
     rcnn = rcnn_head::RCNNHead(rcnn_opts);
@@ -26,32 +26,36 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &back
     std::cout << "loading weights for backbone...\n";
     torch::load(vgg16, pretrained);
 
-    /// I have no idea why the following code cannot be compiled, so I modified VGG16 model instead.
+    auto features_sequential = vgg16->features->modules(false);
+    // remove last max pooling layer
+    features_sequential.pop_back();
+
+    /// I have no idea why the following code cannot be compiled, so I use dynamic cast
     /// ```
-    /// for (auto &module : layers)
+    /// for (auto &module : features_sequential)
     /// {
-    ///     if (auto M = std::dynamic_pointer_cast<torch::nn::MaxPool2dImpl>(module))
-    ///     {
-    ///         RCNN_base->push_back(M);
-    ///     }
-    ///     else if (auto M = std::dynamic_pointer_cast<torch::nn::Conv2dImpl>(module))
-    ///     {
-    ///         RCNN_base->push_back(M);
-    ///     }
-    ///     else if (auto M = std::dynamic_pointer_cast<torch::nn::ReLUImpl>(module))
-    ///     {
-    ///         RCNN_base->push_back(M);
-    ///     }
-    ///     else
-    ///     {
-    ///         throw std::runtime_error("unknown layer");
-    ///     }
+    ///     feature_extractor->push_back(M);
     /// }
     /// ```
-
-    feature_extractor = vgg16->features;
-    // remove last max pooling layer
-    feature_extractor->unregister_module("MaxPool2d30");
+    for (auto &module : features_sequential)
+    {
+        if (auto M = std::dynamic_pointer_cast<torch::nn::MaxPool2dImpl>(module))
+        {
+            feature_extractor->push_back(M);
+        }
+        else if (auto M = std::dynamic_pointer_cast<torch::nn::Conv2dImpl>(module))
+        {
+            feature_extractor->push_back(M);
+        }
+        else if (auto M = std::dynamic_pointer_cast<torch::nn::ReLUImpl>(module))
+        {
+            feature_extractor->push_back(M);
+        }
+        else
+        {
+            throw std::runtime_error("unknown layer");
+        }
+    }
 
     // Fix the layers before conv3:
     for (int i = 0; i < 10; i++)
