@@ -33,7 +33,33 @@ PASCAL VOC 2007 (Train/Test: 07trainval/07test, non-difficult, ROI Align)
 
 ### faster rcnn Pytorch
 
-VGG16 6 epoch
+VGG16 6 epoch without flipped
+
+```
+AP for aeroplane = 0.6669
+AP for bicycle = 0.7746
+AP for bird = 0.6803
+AP for boat = 0.5070
+AP for bottle = 0.5115
+AP for bus = 0.7282
+AP for car = 0.8189
+AP for cat = 0.8013
+AP for chair = 0.4790
+AP for cow = 0.7246
+AP for diningtable = 0.5721
+AP for dog = 0.7391
+AP for horse = 0.8211
+AP for motorbike = 0.7450
+AP for person = 0.7603
+AP for pottedplant = 0.4085
+AP for sheep = 0.6820
+AP for sofa = 0.6429
+AP for train = 0.6952
+AP for tvmonitor = 0.7293
+Mean AP = 0.674
+```
+
+VGG16 6 epoch with flipped
 
 ```
 AP for aeroplane = 0.7392

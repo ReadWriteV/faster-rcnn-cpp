@@ -1,5 +1,4 @@
 #include "detector.h"
-#include "utils.h"
 #include "voc.h"
 
 #include <array>
@@ -29,7 +28,7 @@ int main(int argc, char **argv)
         // clang-format off
         train_options_desc.add_options()
         ("help,h", "help guide")
-        ("path,p", boost::program_options::value<std::string>(&config_file_path)->default_value("./config/faster_rcnn_r50_fpn_1x_voc.json"), "config file path")
+        ("path,p", boost::program_options::value<std::string>(&config_file_path)->default_value("./config/faster_rcnn_vgg16.json"), "config file path")
         ("model,m", boost::program_options::value<std::string>(&model_file_path)->required(), "model file path")
         ("result_path,r", boost::program_options::value<std::string>(&result_folder_path)->required(), "result file save folder")
         ("gpu,g", boost::program_options::value(&gpu_id)->default_value(-1), "id of gpu");
@@ -68,8 +67,8 @@ int main(int argc, char **argv)
 
         auto model_opts = opts.get_child("model");
         // construct FasterRCNN object detector
-        auto model = detector::FasterRCNN(model_opts.get_child("backbone"), model_opts.get_child("neck"),
-                                          model_opts.get_child("rpn_head"), model_opts.get_child("rcnn_head"));
+        auto model = detector::FasterRCNNVGG16(model_opts.get_child("backbone"), model_opts.get_child("rpn_head"),
+                                               model_opts.get_child("rcnn_head"));
         auto device = torch::Device(torch::kCUDA, gpu_id);
         torch::load(model, model_file_path);
         model->eval();
