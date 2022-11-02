@@ -30,11 +30,11 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &back
     // remove last max pooling layer
     features_sequential.pop_back();
 
-    /// I have no idea why the following code cannot be compiled, so I use dynamic cast
+    /// I have no idea why the following code cannot be compiled, so I use dynamic cast instead.
     /// ```
     /// for (auto &module : features_sequential)
     /// {
-    ///     feature_extractor->push_back(M);
+    ///     feature_extractor->push_back(module);
     /// }
     /// ```
     for (auto &module : features_sequential)
@@ -68,13 +68,31 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &back
         }
     }
 
-    // this should be in RCNNHead
-    // torch::nn::Sequential RCNN_top;
-    // for (std::size_t i = 0; i < vgg16->classifier->size() - 1; i++)
-    // {
-    //     RCNN_top->push_back(vgg16->classifier[i]);
-    // }
-    // rcnn->set_fcs(vgg16->classifier);
+    auto classifier_sequential = vgg16->classifier->modules(false);
+    // remove last linear layer
+    classifier_sequential.pop_back();
+
+    torch::nn::Sequential RCNN_top;
+    for (auto &module : classifier_sequential)
+    {
+        if (auto M = std::dynamic_pointer_cast<torch::nn::LinearImpl>(module))
+        {
+            RCNN_top->push_back(M);
+        }
+        else if (auto M = std::dynamic_pointer_cast<torch::nn::ReLUImpl>(module))
+        {
+            RCNN_top->push_back(M);
+        }
+        else if (auto M = std::dynamic_pointer_cast<torch::nn::DropoutImpl>(module))
+        {
+            RCNN_top->push_back(M);
+        }
+        else
+        {
+            throw std::runtime_error("unknown layer");
+        }
+    }
+    rcnn->set_fcs(RCNN_top);
 
     register_module("feature_extractor", feature_extractor);
     register_module("rpn_head", rpn);

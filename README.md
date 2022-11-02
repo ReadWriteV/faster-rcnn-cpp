@@ -13,6 +13,8 @@ Faster RCNN、DA Faster RCNN的 libtorch 实现。
 + 数据集变换采用 libtorch 的 *Transform* 接口
 + boost::property_tree::ptree 实现 *get&lt;std::vector&lt;T>>*
 
++ 图片裁剪大于 width / height > 2, < 0.5
+
 ## Benchmark
 
 PASCAL VOC 2007 (Train/Test: 07trainval/07test, non-difficult, ROI Align)
@@ -33,16 +35,18 @@ PASCAL VOC 2007 (Train/Test: 07trainval/07test, non-difficult, ROI Align)
 
 ### VGG16 (VOC Metric)
 
+batch size: 1, lr: 1e-3, decay epoch: 5, total epoch: 6 
+
 |    this        | AP |
 | ---------- | -------- |
-| VGG-feature + VGG-classifier + old-RPN without flipped  |  0.6064   |
-| VGG-feature + classifier + old-RPN without flipped  |  0.6405   |
+| VGG-feature + VGG-classifier + old-RPN + without flipped  |  0.6064   |
+| VGG-feature + classifier + old-RPN + without flipped  |  0.6405   |
 
 
 |    Pytorch        | AP |
 | ---------- | -------- |
-|  without flipped  |  0.674   |
-|  with flipped  |  0.7010   |
+| VGG-feature + VGG-classifier + without flipped  |  0.674   |
+| VGG-feature + VGG-classifier + with flipped  |  0.7010   |
 
 
 

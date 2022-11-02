@@ -135,8 +135,7 @@ void RCNNHeadImpl::init()
 
 void RCNNHeadImpl::set_fcs(torch::nn::Sequential fcs)
 {
-    this->fcs = fcs;
-    this->fcs = replace_module("fcs", this->fcs);
+    this->fcs = replace_module("fcs", fcs);
 }
 
 std::tuple<torch::Tensor, torch::Tensor> RCNNHeadImpl::forward(torch::Tensor feat, torch::Tensor rois)
