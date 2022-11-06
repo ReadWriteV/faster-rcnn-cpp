@@ -89,7 +89,22 @@ int main(int argc, char **argv)
                               .weight_decay(optimizer_opts.get<float>("weight_decay"));
         float epoch_lr = optimizer_opts.get<float>("lr");
         // construct SGD optimizer
-        auto optimizer = std::make_shared<torch::optim::SGD>(model->parameters(), optim_opts);
+        // construct SGD optimizer
+        std::vector<torch::Tensor> params;
+        for (auto &e : _model->parameters())
+        {
+            if (e.requires_grad())
+            {
+                params.push_back(e);
+                std::cout << "requires_grad is true\n";
+            }
+            else
+            {
+                std::cout << "requires_grad is false\n";
+            }
+        }
+    
+        _optimizer = std::make_shared<torch::optim::SGD>(params, optim_opts);
 
         std::cout << "[SGDOptions] lr: " << optim_opts.lr() << ", momentum: " << optim_opts.momentum()
                   << ", weight_decay: " << optim_opts.weight_decay() << std::endl;
@@ -142,7 +157,7 @@ int main(int argc, char **argv)
                 // check if lr needs to be warmed up at the begining
                 auto img_data = img_datas[0];
                 img_data.to(_device);
-
+                model->zero_grad();
                 auto model_loss = model->forward_train(img_data);
                 auto tot_loss = torch::tensor(0, torch::TensorOptions().dtype(torch::kFloat32).device(_device));
                 for (const auto &loss : model_loss)

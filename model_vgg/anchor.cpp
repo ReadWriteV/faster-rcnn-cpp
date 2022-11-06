@@ -35,36 +35,31 @@ void AnchorGeneratorImpl::init()
               << "anchor_scales: " << _anchor_scales << ", anchor_ratios" << _anchor_ratios
               << ", feat_stride: " << _feat_stride << std::endl;
 
+    constexpr float base_size = 16.0f;
+
     auto scales = torch::tensor(_anchor_scales, torch::kFloat32),
          ratios = torch::tensor(_anchor_ratios, torch::kFloat32),
          strides = torch::tensor(_feat_stride, torch::kFloat32).view(1);
 
-    // [num_scales, 1]
-    /// [ 128
-    ///   256
-    ///   512 ]
-    scales = (strides * scales).unsqueeze(-1);
-    // [num_scales, num_ratios]
-    auto w = scales / ratios.sqrt(), h = scales * ratios.sqrt();
+    constexpr auto size = base_size * base_size;
+    constexpr auto x_ctr = (base_size - 1) / 2.0f;
+    constexpr auto y_ctr = (base_size - 1) / 2.0f;
 
-    // [num_scales, num_ratios, 4], center at upper-left corner
-    /* Here _base_anchors is a little different from Python version
-        (1,.,.) =
-        -90.5097 -45.2548  90.5097  45.2548
-         -64.0000 -64.0000  64.0000  64.0000
-        -45.2548 -90.5097  45.2548  90.5097
-
-        (2,.,.) =
-         -181.0193  -90.5097  181.0193   90.5097
-         -128.0000 -128.0000  128.0000  128.0000
-          -90.5097 -181.0193   90.5097  181.0193
-
-        (3,.,.) =
-         -362.0387 -181.0193  362.0387  181.0193
-         -256.0000 -256.0000  256.0000  256.0000
-         -181.0193 -362.0387  181.0193  362.0387
-    */
-    _base_anchors = torch::stack({-w / 2, -h / 2, w / 2, h / 2}, -1);
+    auto size_ratios = size / ratios;
+    auto w = size_ratios.sqrt().round();
+    auto h = (w * ratios).round();
+    w = w.unsqueeze(-1);
+    h = h.unsqueeze(-1);
+    w = w * scales;
+    h = h * scales;
+    // clang-format off
+    _base_anchors = torch::stack({x_ctr - 0.5 * (w - 1),
+                                 y_ctr - 0.5 * (h - 1),
+                                 x_ctr + 0.5 * (w - 1),
+                                 y_ctr + 0.5 * (h - 1)},
+                                -1);
+    // clang-format on
+    std::cout << "_base_anchors:\n" << _base_anchors << std::endl;
     register_buffer("base_anchors", _base_anchors); // device follows module's device
 }
 

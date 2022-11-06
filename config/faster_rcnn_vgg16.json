@@ -90,8 +90,8 @@
                     "pos_frac": 0.5,
                     "add_gt": false
                 },
-                "nms_pre": 2000,
-                "nms_post": 1000,
+                "nms_pre": 12000,
+                "nms_post": 2000,
                 "nms_thr": 0.7,
                 "min_bbox_size": 8
             },
@@ -164,7 +164,7 @@
         "type": "SGD",
         "lr": 0.001,
         "momentum": 0.9,
-        "weight_decay": 0.0001
+        "weight_decay": 0.0005
     },
     "lr_opts": {
         "decay_epochs": [
@@ -175,5 +175,6 @@
     "batch_size": 1,
     "save_ckpt_period": 2,
     "log_period": 100,
-    "work_dir": "voc_vgg16"
+    "work_dir": "voc_vgg16",
+    "gpu": 2
 }

@@ -68,31 +68,30 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &back
         }
     }
 
-    auto classifier_sequential = vgg16->classifier->modules(false);
-    // remove last linear layer
-    classifier_sequential.pop_back();
-
-    torch::nn::Sequential RCNN_top;
-    for (auto &module : classifier_sequential)
-    {
-        if (auto M = std::dynamic_pointer_cast<torch::nn::LinearImpl>(module))
-        {
-            RCNN_top->push_back(M);
-        }
-        else if (auto M = std::dynamic_pointer_cast<torch::nn::ReLUImpl>(module))
-        {
-            RCNN_top->push_back(M);
-        }
-        else if (auto M = std::dynamic_pointer_cast<torch::nn::DropoutImpl>(module))
-        {
-            RCNN_top->push_back(M);
-        }
-        else
-        {
-            throw std::runtime_error("unknown layer");
-        }
-    }
-    rcnn->set_fcs(RCNN_top);
+    // auto classifier_sequential = vgg16->classifier->modules(false);
+    // // remove last linear layer
+    // classifier_sequential.pop_back();
+    // torch::nn::Sequential RCNN_top;
+    // for (auto &module : classifier_sequential)
+    // {
+    //     if (auto M = std::dynamic_pointer_cast<torch::nn::LinearImpl>(module))
+    //     {
+    //         RCNN_top->push_back(M);
+    //     }
+    //     else if (auto M = std::dynamic_pointer_cast<torch::nn::ReLUImpl>(module))
+    //     {
+    //         RCNN_top->push_back(M);
+    //     }
+    //     else if (auto M = std::dynamic_pointer_cast<torch::nn::DropoutImpl>(module))
+    //     {
+    //         RCNN_top->push_back(M);
+    //     }
+    //     else
+    //     {
+    //         throw std::runtime_error("unknown layer");
+    //     }
+    // }
+    // rcnn->set_fcs(RCNN_top);
 
     register_module("feature_extractor", feature_extractor);
     register_module("rpn_head", rpn);
