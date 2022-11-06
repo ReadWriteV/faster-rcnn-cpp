@@ -91,7 +91,7 @@ int main(int argc, char **argv)
         // construct SGD optimizer
         // construct SGD optimizer
         std::vector<torch::Tensor> params;
-        for (auto &e : _model->parameters())
+        for (auto &e : model->parameters())
         {
             if (e.requires_grad())
             {
@@ -103,8 +103,8 @@ int main(int argc, char **argv)
                 std::cout << "requires_grad is false\n";
             }
         }
-    
-        _optimizer = std::make_shared<torch::optim::SGD>(params, optim_opts);
+
+        auto optimizer = std::make_shared<torch::optim::SGD>(params, optim_opts);
 
         std::cout << "[SGDOptions] lr: " << optim_opts.lr() << ", momentum: " << optim_opts.momentum()
                   << ", weight_decay: " << optim_opts.weight_decay() << std::endl;
