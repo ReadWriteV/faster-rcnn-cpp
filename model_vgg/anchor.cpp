@@ -35,30 +35,41 @@ void AnchorGeneratorImpl::init()
               << "anchor_scales: " << _anchor_scales << ", anchor_ratios" << _anchor_ratios
               << ", feat_stride: " << _feat_stride << std::endl;
 
-    constexpr float base_size = 16.0f;
+    // constexpr float base_size = 16.0f;
+
+    // auto scales = torch::tensor(_anchor_scales, torch::kFloat32),
+    //      ratios = torch::tensor(_anchor_ratios, torch::kFloat32),
+    //      strides = torch::tensor(_feat_stride, torch::kFloat32).view(1);
+
+    // constexpr auto size = base_size * base_size;
+    // constexpr auto x_ctr = (base_size - 1) / 2.0f;
+    // constexpr auto y_ctr = (base_size - 1) / 2.0f;
+
+    // auto size_ratios = size / ratios;
+    // auto w = size_ratios.sqrt().round();
+    // auto h = (w * ratios).round();
+    // w = w.unsqueeze(-1);
+    // h = h.unsqueeze(-1);
+    // w = w * scales;
+    // h = h * scales;
+    // // clang-format off
+    // _base_anchors = torch::stack({x_ctr - 0.5 * (w - 1),
+    //                              y_ctr - 0.5 * (h - 1),
+    //                              x_ctr + 0.5 * (w - 1),
+    //                              y_ctr + 0.5 * (h - 1)},
+    //                             -1);
+    // // clang-format on
 
     auto scales = torch::tensor(_anchor_scales, torch::kFloat32),
          ratios = torch::tensor(_anchor_ratios, torch::kFloat32),
-         strides = torch::tensor(_feat_stride, torch::kFloat32).view(1);
+         strides = torch::tensor(_feat_stride, torch::kFloat32);
+    // [num_strides, num_scales, 1]
+    scales = (strides.view({-1, 1}) * scales).unsqueeze(-1);
+    // [num_strides, num_scales, num_ratios]
+    auto w = scales / ratios.sqrt(), h = scales * ratios.sqrt();
+    // [num_strides, num_scales, num_ratios, 4], center at upper-left corner
+    _base_anchors = torch::stack({-w / 2, -h / 2, w / 2, h / 2}, -1);
 
-    constexpr auto size = base_size * base_size;
-    constexpr auto x_ctr = (base_size - 1) / 2.0f;
-    constexpr auto y_ctr = (base_size - 1) / 2.0f;
-
-    auto size_ratios = size / ratios;
-    auto w = size_ratios.sqrt().round();
-    auto h = (w * ratios).round();
-    w = w.unsqueeze(-1);
-    h = h.unsqueeze(-1);
-    w = w * scales;
-    h = h * scales;
-    // clang-format off
-    _base_anchors = torch::stack({x_ctr - 0.5 * (w - 1),
-                                 y_ctr - 0.5 * (h - 1),
-                                 x_ctr + 0.5 * (w - 1),
-                                 y_ctr + 0.5 * (h - 1)},
-                                -1);
-    // clang-format on
     std::cout << "_base_anchors:\n" << _base_anchors << std::endl;
     register_buffer("base_anchors", _base_anchors); // device follows module's device
 }

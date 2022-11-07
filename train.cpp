@@ -88,7 +88,7 @@ int main(int argc, char **argv)
                               .momentum(optimizer_opts.get<float>("momentum"))
                               .weight_decay(optimizer_opts.get<float>("weight_decay"));
         float epoch_lr = optimizer_opts.get<float>("lr");
-        // construct SGD optimizer
+
         // construct SGD optimizer
         std::vector<torch::Tensor> params;
         for (auto &e : model->parameters())
@@ -96,11 +96,6 @@ int main(int argc, char **argv)
             if (e.requires_grad())
             {
                 params.push_back(e);
-                std::cout << "requires_grad is true\n";
-            }
-            else
-            {
-                std::cout << "requires_grad is false\n";
             }
         }
 
