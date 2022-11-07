@@ -100,7 +100,7 @@ void BasicTrainer::train()
         if (epoch % _save_ckpt_period == 0)
         {
             // _work_dir must exist
-            torch::save(_model, _work_dir + "/epoch_" + std::to_string(epoch) + ".pt");
+            torch::save(_model, "output/" + _work_dir + "/epoch_" + std::to_string(epoch) + ".pt");
         }
     }
 }
