@@ -1,8 +1,9 @@
 #include "rcnn_head.h"
-#include "cvops.h"
 #include "utils.h"
 
-#include <assert.h>
+#include <torchvision/ops/roi_align.h>
+#include <torchvision/ops/roi_pool.h>
+
 #include <cassert>
 #include <vector>
 
@@ -54,12 +55,12 @@ torch::Tensor RoIExtractorImpl::forward(torch::Tensor feat, torch::Tensor rois)
     rois = torch::cat({torch::full({rois.size(0), 1}, 0, tsr_opts), rois}, 1);
     if (_roi_type == roi_type::RoIAlign)
     {
-        roi_feat =
-            roi_align(feat, rois, 1.0 / _featmap_strides, _output_size[0], _output_size[1], _sampling_ratio, true);
+        roi_feat = vision::ops::roi_align(feat, rois, 1.0 / _featmap_strides, _output_size[0], _output_size[1],
+                                          _sampling_ratio, true);
     }
     else
     {
-        auto pool_res = roi_pool(feat, rois, 1.0 / _featmap_strides, _output_size[0], _output_size[1]);
+        auto pool_res = vision::ops::roi_pool(feat, rois, 1.0 / _featmap_strides, _output_size[0], _output_size[1]);
         roi_feat = std::get<0>(pool_res);
     }
     return roi_feat;

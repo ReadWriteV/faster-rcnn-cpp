@@ -1,12 +1,15 @@
 #include "detector.h"
-#include "vgg.h"
 #include "voc.h"
 
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <string>
+#include <torch/nn/modules/container/functional.h>
 #include <torch/nn/modules/container/sequential.h>
 #include <torch/nn/modules/linear.h>
+
+#include <torchvision/models/vgg.h>
 
 namespace detector
 {
@@ -15,7 +18,7 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &back
                                          const boost::property_tree::ptree &rcnn_opts)
 {
     assert(backbone_opts.get<std::string>("type") == "vgg16");
-    auto vgg16 = backbone::make_vgg16(1000, true);
+    auto vgg16 = vision::models::VGG16();
 
     rpn = rpn_head::RPNHead(rpn_opts);
     rcnn = rcnn_head::RCNNHead(rcnn_opts);
@@ -26,10 +29,6 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &back
     std::cout << "loading weights for backbone...\n";
     torch::load(vgg16, pretrained);
 
-    auto features_sequential = vgg16->features->modules(false);
-    // remove last max pooling layer
-    features_sequential.pop_back();
-
     /// I have no idea why the following code cannot be compiled, so I use dynamic cast instead.
     /// ```
     /// for (auto &module : features_sequential)
@@ -37,17 +36,17 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &back
     ///     feature_extractor->push_back(module);
     /// }
     /// ```
-    for (auto &module : features_sequential)
+
+    auto features_vector = vgg16->features->modules(false);
+    // remove last max pooling layer
+    features_vector.pop_back();
+    for (auto &module : features_vector)
     {
-        if (auto M = std::dynamic_pointer_cast<torch::nn::MaxPool2dImpl>(module))
+        if (auto M = std::dynamic_pointer_cast<torch::nn::Conv2dImpl>(module))
         {
             feature_extractor->push_back(M);
         }
-        else if (auto M = std::dynamic_pointer_cast<torch::nn::Conv2dImpl>(module))
-        {
-            feature_extractor->push_back(M);
-        }
-        else if (auto M = std::dynamic_pointer_cast<torch::nn::ReLUImpl>(module))
+        else if (auto M = std::dynamic_pointer_cast<torch::nn::FunctionalImpl>(module))
         {
             feature_extractor->push_back(M);
         }

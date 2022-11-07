@@ -1,8 +1,8 @@
 #include "bbox.h"
-#include "cvops.h"
 #include "utils.h"
 
 #include <cassert>
+#include <torchvision/ops/nms.h>
 
 namespace bbox
 {
@@ -228,7 +228,7 @@ torch::Tensor batched_nms(torch::Tensor bboxes, // bboxes to apply NMS to
         auto max_range = bboxes.max();
         nms_bboxes = bboxes + (labels * max_range).to(bboxes).view({bboxes.size(0), 1});
     }
-    return nms(nms_bboxes, scores, iou_thr);
+    return vision::ops::nms(nms_bboxes, scores, iou_thr);
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> multiclass_nms(torch::Tensor bboxes, // [n, #class*4] or [n, 4]

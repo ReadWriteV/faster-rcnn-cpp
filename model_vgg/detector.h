@@ -3,7 +3,6 @@
 #include "example.h"
 #include "rcnn_head.h"
 #include "rpn_head.h"
-#include "vgg.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <torch/nn/modules/container/sequential.h>
