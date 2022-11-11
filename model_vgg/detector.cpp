@@ -5,10 +5,10 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <torch/nn/functional.h>
 #include <torch/nn/modules/container/functional.h>
 #include <torch/nn/modules/container/sequential.h>
 #include <torch/nn/modules/linear.h>
-
 #include <torchvision/models/vgg.h>
 
 namespace detector

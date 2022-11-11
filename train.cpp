@@ -74,7 +74,7 @@ int main(int argc, char **argv)
         torch::Device _device(torch::kCUDA, static_cast<torch::DeviceIndex>(opts.get("gpu", -1)));
 
         auto dataset =
-            std::make_shared<dataset::VOCDataset>(opts.get<std::string>("data.dataset_path"), dataset::Mode::train);
+            std::make_unique<dataset::VOCDataset>(opts.get<std::string>("data.dataset_path"), dataset::Mode::train);
 
         auto model_opts = opts.get_child("model");
         auto model = detector::FasterRCNNVGG16(model_opts.get_child("backbone"), model_opts.get_child("rpn_head"),
@@ -90,16 +90,16 @@ int main(int argc, char **argv)
         float epoch_lr = optimizer_opts.get<float>("lr");
 
         // construct SGD optimizer
-        std::vector<torch::Tensor> params;
-        for (auto &e : model->parameters())
-        {
-            if (e.requires_grad())
-            {
-                params.push_back(e);
-            }
-        }
+        // std::vector<torch::Tensor> params;
+        // for (auto &e : model->parameters())
+        // {
+        //     if (e.requires_grad())
+        //     {
+        //         params.push_back(e);
+        //     }
+        // }
 
-        auto optimizer = std::make_shared<torch::optim::SGD>(params, optim_opts);
+        auto optimizer = std::make_unique<torch::optim::SGD>(model->parameters(), optim_opts);
 
         std::cout << "[SGDOptions] lr: " << optim_opts.lr() << ", momentum: " << optim_opts.momentum()
                   << ", weight_decay: " << optim_opts.weight_decay() << std::endl;

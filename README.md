@@ -1,12 +1,11 @@
 # Faster RCNN Cpp
 
-Faster RCNN、DA Faster RCNN的 libtorch 实现。
+Faster RCNN 的 libtorch 实现。
 
 ## Feature
 
 + VOC 和 COCO 两种常见数据集实现
 + VOC 评价方法实现
-+ VGG 系列和 ResNet 系列特征提取网络的实现
 
 ## Todo
 
@@ -30,7 +29,7 @@ PASCAL VOC 2007 (Train/Test: 07trainval/07test, non-difficult, ROI Align)
 
 |    VOC Metric        | AP |
 | ---------- | -------- |
-|  this  |  0.7545   |
+|  this  |  0.7581   |
 |  best  |  0.7606   |
 
 ### VGG16 (VOC Metric)
@@ -39,13 +38,15 @@ batch size: 1, lr: 1e-3, decay epoch: 5, total epoch: 6
 
 |    this        | AP |
 | ---------- | -------- |
-| VGG-feature + VGG-classifier + old-RPN + without flipped  |  0.6064   |
-| VGG-feature + classifier + old-RPN + without flipped  |  0.6405   |
+| VGG-feature + VGG-classifier + old-RPN + random-flipped + Pytorch-config |  0.5359   |
+| VGG-feature + classifier + old-RPN + random-flipped + Pytorch-config  |  0.6128   |
+| VGG-feature + classifier + old-RPN + random-flipped + my-config  |  0.6349   |
 
 
 |    Pytorch        | AP |
 | ---------- | -------- |
 | VGG-feature + VGG-classifier + without flipped  |  0.674   |
+| VGG-feature + VGG-classifier + without flipped + my-dataset  |  0.676   |
 | VGG-feature + VGG-classifier + with flipped  |  0.7010   |
 
 
