@@ -10,9 +10,7 @@ Faster RCNN 的 libtorch 实现。
 ## Todo
 
 + 数据集变换采用 libtorch 的 *Transform* 接口
-+ boost::property_tree::ptree 实现 *get&lt;std::vector&lt;T>>*
-
-+ 图片裁剪大于 width / height > 2, < 0.5
++ 使用 boost::json 而非 boost::property_tree::ptree 加载配置文件
 
 ## Benchmark
 
