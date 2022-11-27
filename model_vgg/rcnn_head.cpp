@@ -105,8 +105,11 @@ void RCNNHeadImpl::init()
     int fc_in = _in_channels * _roi_feat_size * _roi_feat_size;
     for (auto fc_out : _fc_out_channels)
     {
-        fcs->push_back(torch::nn::Linear(fc_in, fc_out));
-        fcs->push_back(torch::nn::ReLU(torch::nn::ReLUOptions(true)));
+        auto linear = torch::nn::Linear(fc_in, fc_out);
+        torch::nn::init::xavier_uniform_(linear->weight);
+        torch::nn::init::constant_(linear->bias, 0.0);
+        _shared_fcs->push_back(linear);
+        _shared_fcs->push_back(torch::nn::ReLU(torch::nn::ReLUOptions(true)));
         fc_in = fc_out;
     }
     _classifier = torch::nn::Linear(_fc_out_channels.back(), _num_classes + 1);
@@ -116,18 +119,12 @@ void RCNNHeadImpl::init()
     _loss_bbox = loss::build_loss(_loss_bbox_opts);
 
     register_module("roi_extractor", _roi_extractor);
-    register_module("fcs", fcs);
+    register_module("shared_fc", _shared_fcs);
     register_module("classifier", _classifier);
     register_module("regressor", _regressor);
     register_module("loss_cls", _loss_cls);
     register_module("loss_bbox", _loss_bbox);
 
-    // init weights
-    for (int i = 0; i < fcs->size(); i += 2)
-    {
-        torch::nn::init::xavier_uniform_(fcs[i]->as<torch::nn::Linear>()->weight);
-        torch::nn::init::constant_(fcs[i]->as<torch::nn::Linear>()->bias, 0.0);
-    }
     torch::nn::init::normal_(_classifier->weight, 0, 0.01);
     torch::nn::init::normal_(_regressor->weight, 0, 0.001);
     torch::nn::init::constant_(_classifier->bias, 0.0);
@@ -136,14 +133,14 @@ void RCNNHeadImpl::init()
 
 void RCNNHeadImpl::set_fcs(torch::nn::Sequential fcs)
 {
-    this->fcs = replace_module("fcs", fcs);
+    this->_shared_fcs = replace_module("shared_fc", fcs);
 }
 
 std::tuple<torch::Tensor, torch::Tensor> RCNNHeadImpl::forward(torch::Tensor feat, torch::Tensor rois)
 {
     auto roi_feats = _roi_extractor->forward(feat, rois);
     auto x = roi_feats.view({roi_feats.size(0), -1});
-    x = fcs->forward(x);
+    x = _shared_fcs->forward(x);
     auto cls_outs = _classifier->forward(x);
     auto bbox_outs = _regressor->forward(x);
     return std::make_tuple(cls_outs, bbox_outs);

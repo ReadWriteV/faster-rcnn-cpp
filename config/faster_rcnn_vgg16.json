@@ -42,10 +42,14 @@
     "model": {
         "backbone": {
             "type": "vgg16",
-            "pretrained": "data/vgg16.pt"
+            "pretrained": "data/vgg16.pt",
+            "frozen_stages": [
+                1
+            ]
         },
         "rpn_head": {
             "in_channels": 512,
+            "out_channels": 256,
             "anchor_opts": {
                 "anchor_scales": [
                     8,
@@ -57,7 +61,8 @@
                     1.0,
                     2.0
                 ],
-                "feat_stride": 16
+                "feat_stride": 16,
+                "center_offset": 0.0
             },
             "bbox_coder_opts": {
                 "means": [
@@ -90,23 +95,23 @@
                     "pos_frac": 0.5,
                     "add_gt": false
                 },
-                "nms_pre": 12000,
-                "nms_post": 2000,
+                "nms_pre": 2000,
+                "nms_post": 1000,
                 "nms_thr": 0.7,
-                "min_bbox_size": 8
+                "min_bbox_size": 0
             },
             "test_opts": {
-                "nms_pre": 6000,
-                "nms_post": 300,
+                "nms_pre": 1000,
+                "nms_post": 1000,
                 "nms_thr": 0.7,
-                "min_bbox_size": 16
+                "min_bbox_size": 0
             }
         },
         "rcnn_head": {
             "in_channels": 512,
             "fc_out_channels": [
-                4096,
-                4096
+                1024,
+                1024
             ],
             "num_classes": 20,
             "roi_feat_size": 7,
@@ -162,19 +167,22 @@
     },
     "optimizer": {
         "type": "SGD",
-        "lr": 0.001,
+        "lr": 0.00125,
         "momentum": 0.9,
-        "weight_decay": 0.0005
+        "weight_decay": 0.0001
     },
     "lr_opts": {
         "decay_epochs": [
-            5
-        ]
+            9,
+            12
+        ],
+        "warmup_steps": 500,
+        "warmup_start": 0.001
     },
-    "total_epochs": 6,
+    "total_epochs": 12,
     "batch_size": 1,
     "save_ckpt_period": 2,
     "log_period": 100,
     "work_dir": "voc_vgg16",
-    "gpu": 2
+    "gpu": 0
 }

@@ -88,7 +88,7 @@ class RCNNHeadImpl : public torch::nn::Module
     bbox::BBoxAssigner _bbox_assigner;
 
     RoIExtractor _roi_extractor{nullptr};
-    torch::nn::Sequential fcs;
+    torch::nn::Sequential _shared_fcs;
     torch::nn::Linear _classifier{nullptr};
     torch::nn::Linear _regressor{nullptr};
     std::shared_ptr<loss::Loss> _loss_cls{nullptr};
