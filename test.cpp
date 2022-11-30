@@ -75,6 +75,7 @@ int main(int argc, char **argv)
         model->to(device);
         auto dataset = std::make_shared<dataset::VOCDataset>(opts.get<std::string>("data.dataset_path"),
                                                              dataset::Mode::test, true);
+        std::cout << "test size: " << dataset->size().value() << std::endl;
 
         utils::ProgressTracker pg_tracker(1, dataset->size().value());
         auto loader_opts = torch::data::DataLoaderOptions().batch_size(1).workers(opts.get<int>("data.test_workers"));

@@ -75,6 +75,7 @@ int main(int argc, char **argv)
 
         auto dataset =
             std::make_unique<dataset::VOCDataset>(opts.get<std::string>("data.dataset_path"), dataset::Mode::train);
+        std::cout << "train size: " << dataset->size().value() << std::endl;
 
         auto model_opts = opts.get_child("model");
         auto model = detector::FasterRCNNVGG16(model_opts.get_child("backbone"), model_opts.get_child("rpn_head"),
