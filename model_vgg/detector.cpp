@@ -37,25 +37,25 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &back
     /// }
     /// ```
 
-    // auto features_vector = vgg16->features->modules(false);
-    feature_extractor = vgg16->features;
+    auto features_vector = vgg16->features->modules(false);
+
     // remove last max pooling layer
-    // features_vector.pop_back();
-    // for (auto &module : features_vector)
-    // {
-    //     if (auto M = std::dynamic_pointer_cast<torch::nn::Conv2dImpl>(module))
-    //     {
-    //         feature_extractor->push_back(M);
-    //     }
-    //     else if (auto M = std::dynamic_pointer_cast<torch::nn::FunctionalImpl>(module))
-    //     {
-    //         feature_extractor->push_back(M);
-    //     }
-    //     else
-    //     {
-    //         throw std::runtime_error("unknown layer");
-    //     }
-    // }
+    features_vector.pop_back();
+    for (auto &module : features_vector)
+    {
+        if (auto M = std::dynamic_pointer_cast<torch::nn::Conv2dImpl>(module))
+        {
+            feature_extractor->push_back(M);
+        }
+        else if (auto M = std::dynamic_pointer_cast<torch::nn::FunctionalImpl>(module))
+        {
+            feature_extractor->push_back(M);
+        }
+        else
+        {
+            throw std::runtime_error("unknown layer");
+        }
+    }
 
     // Fix the layers before conv3:
     for (int i = 0; i < 10; i++)
