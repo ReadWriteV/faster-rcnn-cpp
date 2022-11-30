@@ -142,9 +142,9 @@ void VOCDataset::transform(ExampleType &example, cv::Mat &image_data)
     if (mode == Mode::train)
     {
         float flip_ratio = 0.5f;
-        static std::random_device rd;
-        static std::default_random_engine eng(rd());
-        static std::uniform_real_distribution<float> distr(0.0f, 1.0f);
+        // same random sequence every run
+        static std::default_random_engine eng{};
+        static std::uniform_real_distribution<float> distr{0.0f, 1.0f};
         if (distr(eng) < flip_ratio)
         {
             std::vector<int64_t> img_shape({img.rows, img.cols});
