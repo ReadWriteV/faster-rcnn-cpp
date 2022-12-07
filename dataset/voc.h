@@ -3,9 +3,9 @@
 #include <array>
 #include <cstddef>
 #include <filesystem>
-#include <map>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 #include <opencv2/core/mat.hpp>
@@ -37,22 +37,27 @@ class VOCDataset : public torch::data::datasets::Dataset<VOCDataset, DetectionEx
     /// Returns the size of the dataset.
     torch::optional<size_t> size() const override;
 
-    constexpr static std::string_view get_category_name(std::size_t i);
+    static constexpr std::string_view get_category_name(std::size_t i);
     static std::size_t get_category_id(std::string_view i);
 
-    static constexpr std::size_t num_class = 20;
-    static constexpr std::array<std::string_view, num_class> categories = {
-        "aeroplane" /*0*/, "bicycle", "bird",        "boat",     "bottle", "bus",       "car",    "cat",
-        "chair",           "cow",     "diningtable", "dog",      "horse",  "motorbike", "person", "pottedplant",
-        "sheep",           "sofa",    "train",       "tvmonitor"};
-    static std::map<std::string_view, std::size_t> categories_name_to_id; // map from categories_name to id
+    // static constexpr std::array<std::string_view, num_class> categories = {
+    //     "aeroplane" /*0*/, "bicycle", "bird",        "boat",     "bottle", "bus",       "car",    "cat",
+    //     "chair",           "cow",     "diningtable", "dog",      "horse",  "motorbike", "person", "pottedplant",
+    //     "sheep",           "sofa",    "train",       "tvmonitor"};
+    static constexpr std::array categories = {"person", "rider", "car",        "truck",
+                                              "bus",    "train", "motorcycle", "bicycle"};
+
+    static constexpr std::size_t num_class = categories.size();
+
+    static std::unordered_map<std::string_view, std::size_t> categories_name_to_id; // map from categories_name to id
 
   private:
     void transform(ExampleType &img_data, cv::Mat &image_data); // TODO: use map method
 
     std::filesystem::path root;
-    std::vector<std::string> examples_index;                          // map from image index to image name
-    std::map<std::size_t, DetectionExample::TargetType> example_anns; // map from image index to gt_bboxes and gt_labels
+    std::vector<std::string> examples_index; // map from image index to image name
+    std::unordered_map<std::size_t, DetectionExample::TargetType>
+        example_anns; // map from image index to gt_bboxes and gt_labels
 
     Mode mode;          // train or test
     bool non_difficult; // wh non-difficult bboxes are used

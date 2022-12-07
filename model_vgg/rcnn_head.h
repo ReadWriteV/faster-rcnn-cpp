@@ -4,15 +4,16 @@
 #include "example.h"
 #include "loss.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include <string_view>
+#include <vector>
+
+#include <boost/json/value.hpp>
 #include <torch/torch.h>
 
 namespace rcnn_head
 {
 /**
-   Due to the use of FPN, the features are in multi-levels.
-   It first maps rois to different feature levels by roi sizes,
-   then do RoIPool or RoIAlign on different levels.
+  do RoIPool or RoIAlign on different levels.
  */
 class RoIExtractorImpl : public torch::nn::Module
 {
@@ -22,26 +23,21 @@ class RoIExtractorImpl : public torch::nn::Module
         RoIAlign,
         RoIPool
     };
-    RoIExtractorImpl(int out_channels,
-                     int featmap_strides,                 // size must be smaller than number of features recieved
-                     const std::string &type,             // support either RoIAlign or RoIPool
-                     const std::vector<int> &output_size, // [h, w], e.g. [7, 7]
-                     int sampling_ratio = 0,              // only used in RoIAlign
-                     int finest_scale = 56);
+    RoIExtractorImpl(int featmap_strides,          // size must be smaller than number of features recieved
+                     std::string_view type,        // support either RoIAlign or RoIPool
+                     std::vector<int> output_size, // [h, w], e.g. [7, 7]
+                     int sampling_ratio = 0);      // only used in RoIAlign
 
-    RoIExtractorImpl(const boost::property_tree::ptree &opts);
+    RoIExtractorImpl(const boost::json::value &opts);
 
     // return fix-sized roi pooling result
     torch::Tensor forward(torch::Tensor feat, torch::Tensor rois);
 
   private:
-    int _out_channels;
     int _featmap_strides;
-    std::string _type;
+    roi_type _roi_type{roi_type::RoIAlign};
     std::vector<int> _output_size;
     int _sampling_ratio;
-    int _finest_scale;
-    roi_type _roi_type{roi_type::RoIAlign};
 };
 TORCH_MODULE(RoIExtractor);
 
@@ -51,15 +47,12 @@ TORCH_MODULE(RoIExtractor);
 class RCNNHeadImpl : public torch::nn::Module
 {
   public:
-    RCNNHeadImpl(int in_channels, const std::vector<int> &fc_out_channels, int num_classes, int roi_feat_size,
-                 const boost::property_tree::ptree &roi_extractor_opts,
-                 const boost::property_tree::ptree &bbox_coder_opts, const boost::property_tree::ptree &loss_cls_opts,
-                 const boost::property_tree::ptree &loss_bbox_opts, const boost::property_tree::ptree &train_opts,
-                 const boost::property_tree::ptree &test_opts);
+    RCNNHeadImpl(int in_channels, const std::vector<long> &fc_out_channels, int num_classes, int roi_feat_size,
+                 const boost::json::value &roi_extractor_opts, const boost::json::value &bbox_coder_opts,
+                 const boost::json::value &loss_cls_opts, const boost::json::value &loss_bbox_opts,
+                 const boost::json::value &train_opts, const boost::json::value &test_opts);
 
-    RCNNHeadImpl(const boost::property_tree::ptree &opts);
-
-    void init();
+    RCNNHeadImpl(const boost::json::value &opts);
 
     void set_fcs(torch::nn::Sequential fcs);
 
@@ -73,21 +66,15 @@ class RCNNHeadImpl : public torch::nn::Module
                                                                          const dataset::DetectionExample &example);
 
   private:
-    int _in_channels;
-    std::vector<int> _fc_out_channels;
     int _num_classes;
-    int _roi_feat_size;
-    boost::property_tree::ptree _roi_extractor_opts;
-    boost::property_tree::ptree _bbox_coder_opts;
-    boost::property_tree::ptree _train_opts;
-    boost::property_tree::ptree _test_opts;
-    boost::property_tree::ptree _loss_cls_opts;
-    boost::property_tree::ptree _loss_bbox_opts;
+
+    const boost::json::value &_test_opts;
 
     bbox::BBoxRegressCoder _bbox_coder;
     bbox::BBoxAssigner _bbox_assigner;
 
     RoIExtractor _roi_extractor{nullptr};
+
     torch::nn::Sequential _shared_fcs;
     torch::nn::Linear _classifier{nullptr};
     torch::nn::Linear _regressor{nullptr};

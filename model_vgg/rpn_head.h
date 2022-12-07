@@ -5,7 +5,7 @@
 #include "example.h"
 #include "loss.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include <boost/json/value.hpp>
 #include <torch/torch.h>
 #include <vector>
 
@@ -17,12 +17,12 @@ namespace rpn_head
 class RPNHeadImpl : public torch::nn::Module
 {
   public:
-    RPNHeadImpl(int in_channels, const boost::property_tree::ptree &anchor_opts,
-                const boost::property_tree::ptree &bbox_coder_opts, const boost::property_tree::ptree &loss_cls_opts,
-                const boost::property_tree::ptree &loss_bbox_opts, const boost::property_tree::ptree &train_opts,
-                const boost::property_tree::ptree &test_opts);
+    RPNHeadImpl(const std::int64_t in_channel, const std::int64_t out_channel, const boost::json::value &anchor_opts,
+                const boost::json::value &bbox_coder_opts, const boost::json::value &loss_cls_opts,
+                const boost::json::value &loss_bbox_opts, const boost::json::value &train_opts,
+                const boost::json::value &test_opts);
 
-    RPNHeadImpl(const boost::property_tree::ptree &opts);
+    RPNHeadImpl(const boost::json::value &opts);
 
     std::tuple<torch::Tensor, torch::Tensor> forward(torch::Tensor feat);
 
@@ -34,23 +34,18 @@ class RPNHeadImpl : public torch::nn::Module
     torch::Tensor forward_test(torch::Tensor feat, const dataset::DetectionExample &example);
 
     // get_proposal
-    torch::Tensor get_proposals(torch::Tensor anchors, torch::Tensor cls_out, torch::Tensor bbox_out,
-                                const std::vector<int64_t> &img_shape, const boost::property_tree::ptree &opts);
+    torch::Tensor get_proposals(torch::Tensor anchors, torch::Tensor cls_out, torch::Tensor bbox_delta,
+                                const std::vector<int64_t> &img_shape, const boost::json::value &opts);
 
   private:
-    int _in_channels;
-    boost::property_tree::ptree _anchor_opts;
-    boost::property_tree::ptree _bbox_coder_opts;
-    boost::property_tree::ptree _train_opts;
-    boost::property_tree::ptree _test_opts;
-    boost::property_tree::ptree _loss_cls_opts;
-    boost::property_tree::ptree _loss_bbox_opts;
+    const boost::json::value &_train_opts;
+    const boost::json::value &_test_opts;
 
     bbox::BBoxRegressCoder _bbox_coder;
     anchor::AnchorGenerator _anchor_generator;
     bbox::BBoxAssigner _bbox_assigner;
 
-    int _class_channels{1};
+    std::uint32_t _class_channels{1};
 
     torch::nn::Conv2d _conv{nullptr};
     torch::nn::Conv2d _classifier{nullptr};

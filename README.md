@@ -22,8 +22,7 @@ PASCAL VOC 2007 (Train/Test: 07trainval/07test, non-difficult, ROI Align)
 | ---------- | -------- | ---------- |
 |  this  |  0.439   | 0.767 |
 | mmdet | 0.437 | 0.769 |
-|base |0.438 | 0.768|
-|best|0.439 | 0.771|
+|  base  |0.438 | 0.768|
 
 |    VOC Metric        | AP |
 | ---------- | -------- |
@@ -32,14 +31,15 @@ PASCAL VOC 2007 (Train/Test: 07trainval/07test, non-difficult, ROI Align)
 
 ### VGG16 (VOC Metric)
 
-batch size: 1, lr: 1e-3, decay epoch: 5, total epoch: 6 
+batch size: 1, lr: 0.00125, decay epoch: 9 12, total epoch: 12 
 
 |    this        | AP |
 | ---------- | -------- |
-| VGG-feature + VGG-classifier + old-RPN + random-flipped + Pytorch-config |  0.5359   |
-| VGG-feature + classifier + old-RPN + random-flipped + Pytorch-config  |  0.6128   |
-| VGG-feature + classifier + old-RPN + random-flipped + my-config  |  0.6349   |
+| VGG-feature + VGG-classifier + random-flipped |  0.6615   |
+| VGG-feature + classifier + random-flipped |  0.6751   |
+| VGG-feature + classifier + append-flipped |  0.6796   |
 
+batch size: 1, lr: 1e-3, decay epoch: 5, total epoch: 6 
 
 |    Pytorch        | AP |
 | ---------- | -------- |
@@ -53,7 +53,7 @@ batch size: 1, lr: 1e-3, decay epoch: 5, total epoch: 6
 
 
 ## Acknowledgement
-This project is based on the following projects:
+
+This project is based on the following project:
 
 + https://github.com/thisisi3/libtorch-faster-rcnn
-+ https://github.com/jwyang/faster-rcnn.pytorch

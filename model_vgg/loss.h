@@ -2,7 +2,7 @@
 
 #include "bbox.h"
 
-#include <boost/property_tree/ptree_fwd.hpp>
+#include <boost/json/value.hpp>
 #include <string>
 #include <torch/torch.h>
 
@@ -23,7 +23,7 @@ class L1Loss : public Loss
 {
   public:
     L1Loss(double loss_weight);
-    L1Loss(const boost::property_tree::ptree &opts);
+    L1Loss(const boost::json::value &opts);
 
     torch::Tensor forward(torch::Tensor pred, torch::Tensor target, double avg_factor) override;
 
@@ -36,7 +36,7 @@ class GIoULoss : public Loss
 {
   public:
     GIoULoss(double loss_weight);
-    GIoULoss(const boost::property_tree::ptree &opts);
+    GIoULoss(const boost::json::value &opts);
 
     // assume both pred and target represent a same amount of bboxes
     torch::Tensor forward(torch::Tensor pred, torch::Tensor target, double avg_factor) override;
@@ -50,7 +50,7 @@ class CrossEntropyLoss : public Loss
 {
   public:
     CrossEntropyLoss(double loss_weight);
-    CrossEntropyLoss(const boost::property_tree::ptree &opts);
+    CrossEntropyLoss(const boost::json::value &opts);
 
     torch::Tensor forward(torch::Tensor pred, torch::Tensor target, double avg_factor) override;
 
@@ -63,7 +63,7 @@ class BinaryCrossEntropyLoss : public Loss
 {
   public:
     BinaryCrossEntropyLoss(double loss_weight);
-    BinaryCrossEntropyLoss(const boost::property_tree::ptree &opts);
+    BinaryCrossEntropyLoss(const boost::json::value &opts);
 
     torch::Tensor forward(torch::Tensor pred, torch::Tensor target, double avg_factor) override;
 
@@ -71,6 +71,6 @@ class BinaryCrossEntropyLoss : public Loss
     double _loss_weight;
 };
 
-std::shared_ptr<Loss> build_loss(const boost::property_tree::ptree &opts);
+std::unique_ptr<Loss> build_loss(const boost::json::value &opts);
 
 } // namespace loss

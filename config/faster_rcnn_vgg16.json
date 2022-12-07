@@ -1,6 +1,6 @@
 {
     "data": {
-        "dataset_path": "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/VOCdevkit/VOC2007",
+        "dataset_path": "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/FoggyCityscapes/VOC2007",
         "train_transforms": {
             "img_scale": [
                 1000,
@@ -42,10 +42,7 @@
     "model": {
         "backbone": {
             "type": "vgg16",
-            "pretrained": "data/vgg16.pt",
-            "frozen_stages": [
-                1
-            ]
+            "pretrained": "data/vgg16.pt"
         },
         "rpn_head": {
             "in_channels": 512,
@@ -113,18 +110,16 @@
                 1024,
                 1024
             ],
-            "num_classes": 20,
+            "num_classes": 8,
             "roi_feat_size": 7,
             "roi_extractor_opts": {
-                "out_channels": 256,
                 "featmap_strides": 16,
                 "type": "RoIAlign",
                 "output_size": [
                     7,
                     7
                 ],
-                "sampling_ratio": 0,
-                "finest_scale": 56
+                "sampling_ratio": 0
             },
             "bbox_coder_opts": {
                 "means": [
@@ -183,6 +178,5 @@
     "batch_size": 1,
     "save_ckpt_period": 2,
     "log_period": 100,
-    "work_dir": "voc_vgg16",
-    "gpu": 0
+    "work_dir": "FoggyCityscapes_vgg16"
 }

@@ -20,7 +20,7 @@
 namespace dataset
 {
 
-std::map<std::string_view, std::size_t> VOCDataset::categories_name_to_id;
+std::unordered_map<std::string_view, std::size_t> VOCDataset::categories_name_to_id{};
 
 VOCDataset::VOCDataset(const std::filesystem::path &root, Mode mode, bool non_difficult)
     : root(root), mode(mode), non_difficult(non_difficult)
@@ -37,7 +37,7 @@ VOCDataset::VOCDataset(const std::filesystem::path &root, Mode mode, bool non_di
                    std::inserter(categories_name_to_id, categories_name_to_id.begin()),
                    [i = 0ULL](std::string_view e) mutable { return std::make_pair(e, i++); });
 
-    auto index_file_path = root / "ImageSets" / "Main" / (mode == Mode::train ? "trainval.txt" : "test.txt");
+    auto index_file_path = root / "ImageSets" / "Main" / (mode == Mode::train ? "train.txt" : "test.txt");
     auto annotation_path = root / "Annotations";
 
     std::ifstream file(index_file_path);
@@ -50,7 +50,6 @@ VOCDataset::VOCDataset(const std::filesystem::path &root, Mode mode, bool non_di
     std::size_t i = 0;
     while (std::getline(file, example_index))
     {
-        examples_index.push_back(example_index);
 
         boost::property_tree::ptree pt;
         boost::property_tree::read_xml(annotation_path / (example_index + ".xml"), pt);
@@ -64,6 +63,10 @@ VOCDataset::VOCDataset(const std::filesystem::path &root, Mode mode, bool non_di
                 {
                     continue;
                 }
+                if (categories_name_to_id.find(object.second.get<std::string>("name")) == categories_name_to_id.end())
+                {
+                    continue;
+                }
                 std::vector<int> bbox{object.second.get<int>("bndbox.xmin"), object.second.get<int>("bndbox.ymin"),
                                       object.second.get<int>("bndbox.xmax"), object.second.get<int>("bndbox.ymax")};
                 gt_bboxes.push_back(torch::tensor(bbox));
@@ -73,11 +76,16 @@ VOCDataset::VOCDataset(const std::filesystem::path &root, Mode mode, bool non_di
             }
         }
         int64_t num = gt_bboxes.size();
+        if (num == 0)
+        {
+            continue;
+        }
+        examples_index.push_back(example_index);
         example_anns[i].gt_bboxes = torch::cat(gt_bboxes).view({num, 4});
         example_anns[i].gt_labels = torch::cat(gt_labels);
         i++;
     }
-    assert(examples_index.size() == (mode == Mode::train ? 5011 : 4952));
+    // assert(examples_index.size() == (mode == Mode::train ? 2975 : 500));
     std::cout << "total examples loaded: " << examples_index.size() << std::endl;
 }
 
@@ -96,7 +104,7 @@ DetectionExample VOCDataset::get(size_t index)
 
     // set gt_bboxes and gt_labels
     example.target = example_anns.at(index);
-    example.id = std::stoi(examples_index.at(index));
+    example.id = examples_index.at(index);
     // apply tansform
     transform(example, image_mat);
 

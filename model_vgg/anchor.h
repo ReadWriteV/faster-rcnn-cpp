@@ -3,7 +3,7 @@
 #include "utils.h"
 #include <torch/torch.h>
 
-#include <boost/property_tree/ptree.hpp>
+#include <boost/json/value.hpp>
 
 namespace anchor
 {
@@ -12,12 +12,10 @@ class AnchorGeneratorImpl : public torch::nn::Module
   public:
     // Center_offset used to be 0.5, i.e. center of base anchors is at the center of grid.
     // Later people tend to let center_offset=0, i.e. base anchors are centered at upper-left of the grid.
-    AnchorGeneratorImpl(const std::vector<float> &anchor_scales = {8, 16, 32},
-                        const std::vector<float> &anchor_ratios = {0.5, 1.0, 2.0}, const float &feat_stride = 16);
+    AnchorGeneratorImpl(std::vector<float> anchor_scales = {8.0f, 16.f, 32.0f},
+                        std::vector<float> anchor_ratios = {0.5f, 1.0f, 2.0f}, int feat_stride = 16);
 
-    AnchorGeneratorImpl(const boost::property_tree::ptree &opts);
-
-    void init();
+    AnchorGeneratorImpl(const boost::json::value &opts);
 
     /**
       Need two steps to generate anchors:
@@ -35,7 +33,7 @@ class AnchorGeneratorImpl : public torch::nn::Module
   private:
     std::vector<float> _anchor_scales;
     std::vector<float> _anchor_ratios;
-    float _feat_stride;
+    int _feat_stride;
 
     torch::Tensor _base_anchors;
 

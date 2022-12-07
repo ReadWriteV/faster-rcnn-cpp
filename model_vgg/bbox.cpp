@@ -1,6 +1,7 @@
 #include "bbox.h"
 #include "utils.h"
 
+#include <boost/json/value_to.hpp>
 #include <cassert>
 #include <torchvision/ops/nms.h>
 
@@ -12,24 +13,18 @@ using namespace torch::indexing;
 /*
   class BBoxRegressCoder
  */
-BBoxRegressCoder::BBoxRegressCoder(const std::vector<float> &means, const std::vector<float> &stds)
-    : _means(means), _stds(stds)
+BBoxRegressCoder::BBoxRegressCoder(std::vector<float> means, std::vector<float> stds)
+    : _means{std::move(means)}, _stds{std::move(stds)}
 {
     assert(_means.size() == 4 && _stds.size() == 4 && "target means and stds must have size 4");
 
-    std::cout << "[BBoxRegressCoder] means: " << _means << "stds: " << _stds << std::endl;
+    std::cout << "[BBoxRegressCoder] means: " << _means << ", stds: " << _stds << std::endl;
 }
 
-BBoxRegressCoder::BBoxRegressCoder(const boost::property_tree::ptree &opts)
+BBoxRegressCoder::BBoxRegressCoder(const boost::json::value &opts)
+    : BBoxRegressCoder(boost::json::value_to<std::vector<float>>(opts.at("means")),
+                       boost::json::value_to<std::vector<float>>(opts.at("stds")))
 {
-    auto means_node = opts.get_child("means");
-    std::transform(means_node.begin(), means_node.end(), std::back_inserter(_means),
-                   [](const boost::property_tree::ptree::value_type &v) { return v.second.get_value<float>(); });
-    auto stds_node = opts.get_child("stds");
-    std::transform(stds_node.begin(), stds_node.end(), std::back_inserter(_stds),
-                   [](const boost::property_tree::ptree::value_type &v) { return v.second.get_value<float>(); });
-    assert(_means.size() == 4 && _stds.size() == 4 && "target means and stds must have size 4");
-    std::cout << "[BBoxRegressCoder] means: " << _means << "stds: " << _stds << std::endl;
 }
 
 torch::Tensor BBoxRegressCoder::encode(torch::Tensor base, torch::Tensor bboxes)
@@ -87,9 +82,10 @@ BBoxAssigner::BBoxAssigner(float pos_iou_thr, float neg_iou_thr, float min_pos_i
               << ", add_gt: " << std::boolalpha << _add_gt << std::endl;
 }
 
-BBoxAssigner::BBoxAssigner(const boost::property_tree::ptree &opts)
-    : BBoxAssigner(opts.get<float>("pos_iou_thr"), opts.get<float>("neg_iou_thr"), opts.get<float>("min_pos_iou"),
-                   opts.get<int>("samp_num"), opts.get<float>("pos_frac"), opts.get<bool>("add_gt"))
+BBoxAssigner::BBoxAssigner(const boost::json::value &opts)
+    : BBoxAssigner(opts.at("pos_iou_thr").as_double(), opts.at("neg_iou_thr").as_double(),
+                   opts.at("min_pos_iou").as_double(), opts.at("samp_num").as_int64(), opts.at("pos_frac").as_double(),
+                   opts.at("add_gt").as_bool())
 {
 }
 

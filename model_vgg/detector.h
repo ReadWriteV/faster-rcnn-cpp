@@ -4,9 +4,8 @@
 #include "rcnn_head.h"
 #include "rpn_head.h"
 
-#include <boost/property_tree/ptree.hpp>
+#include <boost/json/value.hpp>
 #include <torch/nn/modules/container/sequential.h>
-#include <torch/nn/modules/linear.h>
 
 namespace detector
 {
@@ -17,8 +16,7 @@ namespace detector
 class FasterRCNNVGG16Impl : public torch::nn::Module
 {
   public:
-    FasterRCNNVGG16Impl(const boost::property_tree::ptree &backbone_opts, const boost::property_tree::ptree &rpn_opts,
-                        const boost::property_tree::ptree &rcnn_opts);
+    FasterRCNNVGG16Impl(const boost::json::value &cfg);
     // return a map of losses
     std::map<std::string, torch::Tensor> forward_train(const dataset::DetectionExample &img_data);
     // return det_bboxes, det_scores, det_labels

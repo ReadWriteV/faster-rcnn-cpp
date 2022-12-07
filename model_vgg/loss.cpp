@@ -3,27 +3,27 @@
 namespace loss
 {
 using namespace bbox;
-std::shared_ptr<Loss> build_loss(const boost::property_tree::ptree &opts)
+std::unique_ptr<Loss> build_loss(const boost::json::value &opts)
 {
-    if (auto type = opts.get<std::string>("type"); type == "L1Loss")
+    if (auto type = opts.at("type").as_string(); type == "L1Loss")
     {
-        return std::make_shared<L1Loss>(opts);
+        return std::make_unique<L1Loss>(opts);
     }
     else if (type == "GIoULoss")
     {
-        return std::make_shared<GIoULoss>(opts);
+        return std::make_unique<GIoULoss>(opts);
     }
     else if (type == "CrossEntropyLoss")
     {
-        return std::make_shared<CrossEntropyLoss>(opts);
+        return std::make_unique<CrossEntropyLoss>(opts);
     }
     else if (type == "BinaryCrossEntropyLoss")
     {
-        return std::make_shared<BinaryCrossEntropyLoss>(opts);
+        return std::make_unique<BinaryCrossEntropyLoss>(opts);
     }
     else
     {
-        throw std::runtime_error("not supported loss type: " + type);
+        throw std::runtime_error(type.append(" is not supported").c_str());
     }
     return nullptr;
 }
@@ -35,7 +35,7 @@ L1Loss::L1Loss(double loss_weight) : _loss_weight(loss_weight)
 {
 }
 
-L1Loss::L1Loss(const boost::property_tree::ptree &opts) : _loss_weight(opts.get<double>("loss_weight"))
+L1Loss::L1Loss(const boost::json::value &opts) : _loss_weight(opts.at("loss_weight").as_double())
 {
 }
 
@@ -50,7 +50,7 @@ torch::Tensor L1Loss::forward(torch::Tensor pred, torch::Tensor target, double a
 GIoULoss::GIoULoss(double loss_weight) : _loss_weight(loss_weight)
 {
 }
-GIoULoss::GIoULoss(const boost::property_tree::ptree &opts) : _loss_weight(opts.get<double>("loss_weight"))
+GIoULoss::GIoULoss(const boost::json::value &opts) : _loss_weight(opts.at("loss_weight").as_double())
 {
 }
 
@@ -67,8 +67,7 @@ CrossEntropyLoss::CrossEntropyLoss(double loss_weight) : _loss_weight(loss_weigh
 {
 }
 
-CrossEntropyLoss::CrossEntropyLoss(const boost::property_tree::ptree &opts)
-    : _loss_weight(opts.get<double>("loss_weight"))
+CrossEntropyLoss::CrossEntropyLoss(const boost::json::value &opts) : _loss_weight(opts.at("loss_weight").as_double())
 {
 }
 
@@ -85,8 +84,8 @@ torch::Tensor CrossEntropyLoss::forward(torch::Tensor pred, torch::Tensor target
 BinaryCrossEntropyLoss::BinaryCrossEntropyLoss(double loss_weight) : _loss_weight(loss_weight)
 {
 }
-BinaryCrossEntropyLoss::BinaryCrossEntropyLoss(const boost::property_tree::ptree &opts)
-    : _loss_weight(opts.get<double>("loss_weight"))
+BinaryCrossEntropyLoss::BinaryCrossEntropyLoss(const boost::json::value &opts)
+    : _loss_weight(opts.at("loss_weight").as_double())
 {
 }
 

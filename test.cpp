@@ -2,15 +2,13 @@
 #include "voc.h"
 
 #include <array>
+#include <boost/json/stream_parser.hpp>
+#include <boost/json/value.hpp>
 #include <boost/program_options/options_description.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
-#include <boost/property_tree/json_parser.hpp>
-#include <c10/core/Device.h>
-#include <c10/core/DeviceType.h>
-#include <cstddef>
 #include <filesystem>
-#include <iomanip>
+#include <fstream>
 #include <stdexcept>
 #include <torch/torch.h>
 
@@ -31,7 +29,7 @@ int main(int argc, char **argv)
         ("path,p", boost::program_options::value<std::string>(&config_file_path)->default_value("./config/faster_rcnn_vgg16.json"), "config file path")
         ("model,m", boost::program_options::value<std::string>(&model_file_path)->required(), "model file path")
         ("result_path,r", boost::program_options::value<std::string>(&result_folder_path)->required(), "result file save folder")
-        ("gpu,g", boost::program_options::value(&gpu_id)->default_value(-1), "id of gpu");
+        ("gpu,g", boost::program_options::value(&gpu_id)->default_value(0), "id of gpu");
         // clang-format on
 
         boost::program_options::variables_map vm;
@@ -62,23 +60,43 @@ int main(int argc, char **argv)
             std::cerr << config_file_path << " NOT exist, check path!" << '\n';
             return -1;
         }
-        boost::property_tree::ptree opts;
-        boost::property_tree::read_json(config_file_path, opts);
+        std::ifstream config_file;
+        config_file.open(config_file_path);
+        assert(config_file.is_open());
+        boost::json::stream_parser p;
+        boost::json::error_code ec;
+        long nread = 0;
+        do
+        {
+            char buf[4096];
+            nread = config_file.readsome(buf, sizeof(buf));
+            p.write(buf, nread, ec);
+        } while (nread != 0);
+        if (ec)
+        {
+            return -1;
+        }
+        p.finish(ec);
+        if (ec)
+        {
+            return -1;
+        }
+        const auto cfg = p.release();
 
-        auto model_opts = opts.get_child("model");
+        auto model_opts = cfg.at("model");
         // construct FasterRCNN object detector
-        auto model = detector::FasterRCNNVGG16(model_opts.get_child("backbone"), model_opts.get_child("rpn_head"),
-                                               model_opts.get_child("rcnn_head"));
+        auto model = detector::FasterRCNNVGG16(model_opts);
         auto device = torch::Device(torch::kCUDA, gpu_id);
         torch::load(model, model_file_path);
         model->eval();
         model->to(device);
-        auto dataset = std::make_shared<dataset::VOCDataset>(opts.get<std::string>("data.dataset_path"),
-                                                             dataset::Mode::test, true);
+        auto dataset = std::make_shared<dataset::VOCDataset>(cfg.at_pointer("/data/dataset_path").as_string().c_str(),
+                                                             dataset::Mode::test);
         std::cout << "test size: " << dataset->size().value() << std::endl;
 
         utils::ProgressTracker pg_tracker(1, dataset->size().value());
-        auto loader_opts = torch::data::DataLoaderOptions().batch_size(1).workers(opts.get<int>("data.test_workers"));
+        auto loader_opts =
+            torch::data::DataLoaderOptions().batch_size(1).workers(cfg.at_pointer("/data/test_workers").as_int64());
         auto dataloader =
             torch::data::make_data_loader<torch::data::samplers::SequentialSampler>(std::move(*dataset), loader_opts);
 
@@ -113,7 +131,7 @@ int main(int argc, char **argv)
                 auto label = det_labels[i].item<long>();
                 auto score = det_scores[i].item<float>();
                 auto bbox = det_bboxes[i];
-                result_files.at(label) << std::setw(6) << std::setfill('0') << example.id << ' ';
+                result_files.at(label) << example.id << ' ';
                 result_files.at(label) << score << ' ';
                 result_files.at(label) << bbox[0].item<float>() << ' ' << bbox[1].item<float>() << ' '
                                        << bbox[2].item<float>() << ' ' << bbox[3].item<float>() << '\n';

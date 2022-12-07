@@ -2,6 +2,8 @@
 
 #include <torch/torch.h>
 
+#include <string>
+
 namespace dataset
 {
 
@@ -44,6 +46,6 @@ struct DetectionExample
     TargetType target;
     std::vector<int64_t> img_shape;
     float scale_factor{-1.0};
-    int id;
+    std::string id;
 };
 } // namespace dataset

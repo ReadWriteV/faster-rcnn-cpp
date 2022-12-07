@@ -16,7 +16,6 @@
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <vector>
 
 namespace dataset
 {
@@ -84,7 +83,6 @@ COCODataset::COCODataset(const std::filesystem::path &image_path, const std::fil
         example_anns[bbox.first] =
             DetectionExample::TargetType(torch::cat(bbox.second).view({num, 4}), torch::cat(gt_labels[bbox.first]));
     }
-    assert(examples_index.size() == (mode == Mode::train ? 5011 : 4952));
     std::cout << "total examples loaded: " << examples_index.size() << std::endl;
 }
 
@@ -102,8 +100,8 @@ DetectionExample COCODataset::get(size_t index)
     // idata.ori_shape = std::vector<int64_t>{img_cv2.rows, img_cv2.cols, 3};
 
     // set gt_bboxes and gt_labels
-    example.id = std::stoi(examples_index.at(index));
-    example.target = example_anns.at(example.id);
+    example.target = example_anns.at(index);
+    example.id = examples_index.at(index);
 
     // apply tansform
     transform(example, image_mat);
@@ -145,9 +143,9 @@ void COCODataset::transform(ExampleType &example, cv::Mat &image_data)
     if (mode == Mode::train)
     {
         float flip_ratio = 0.5f;
-        std::random_device rd;
-        std::default_random_engine eng(rd());
-        std::uniform_real_distribution<float> distr(0.0f, 1.0f);
+        // same random sequence every run
+        static std::default_random_engine eng{};
+        static std::uniform_real_distribution<float> distr{0.0f, 1.0f};
         if (distr(eng) < flip_ratio)
         {
             std::vector<int64_t> img_shape({img.rows, img.cols});

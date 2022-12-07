@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/property_tree/ptree.hpp>
+#include <boost/json/value.hpp>
 #include <torch/torch.h>
 #include <vector>
 
@@ -12,9 +12,9 @@ namespace bbox
 class BBoxRegressCoder
 {
   public:
-    BBoxRegressCoder(const std::vector<float> &means = {0.0f, 0.0f, 0.0f, 0.0f},
-                     const std::vector<float> &stds = {1.0f, 1.0f, 1.0f, 1.0f});
-    BBoxRegressCoder(const boost::property_tree::ptree &opts);
+    BBoxRegressCoder(std::vector<float> means = {0.0f, 0.0f, 0.0f, 0.0f},
+                     std::vector<float> stds = {1.0f, 1.0f, 1.0f, 1.0f});
+    BBoxRegressCoder(const boost::json::value &opts);
 
     // calculate delta given base bboxes and target bboxes
     torch::Tensor encode(torch::Tensor base, torch::Tensor bboxes);
@@ -54,7 +54,7 @@ class BBoxAssigner
                  int samp_num,      // total samples to sample
                  float pos_frac,    // fraction of positive samples
                  bool add_gt);      // if add gt to proposal bboxes
-    BBoxAssigner(const boost::property_tree::ptree &opts);
+    BBoxAssigner(const boost::json::value &opts);
 
     BBoxAssigner() = default;
 

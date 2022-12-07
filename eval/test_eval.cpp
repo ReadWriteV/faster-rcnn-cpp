@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     }
 
     float map = 0;
-    for (auto class_name : eval::voc_categories)
+    for (auto class_name : eval::categories)
     {
         std::string result_file = std::string(result_path) + std::string(class_name) + ".txt";
         auto [prec, rec, ap] = eval::VOCEval(result_file, anno_path, imageset_path, class_name);
@@ -57,6 +57,6 @@ int main(int argc, char **argv)
                   << ", PRE = " << prec << ", REC = " << rec << std::endl;
         map += ap;
     }
-    std::cout << "mAP = " << map / eval::voc_categories.size() << std::endl;
+    std::cout << "mAP = " << map / eval::categories.size() << std::endl;
     return 0;
 }

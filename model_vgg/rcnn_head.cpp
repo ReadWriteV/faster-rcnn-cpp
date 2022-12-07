@@ -4,6 +4,8 @@
 #include <torchvision/ops/roi_align.h>
 #include <torchvision/ops/roi_pool.h>
 
+#include <boost/json.hpp>
+#include <boost/json/serialize.hpp>
 #include <cassert>
 #include <vector>
 
@@ -11,36 +13,23 @@ namespace rcnn_head
 {
 using namespace torch::indexing;
 
-RoIExtractorImpl::RoIExtractorImpl(int out_channels, int featmap_strides, const std::string &type,
-                                   const std::vector<int> &output_size, int sampling_ratio, int finest_scale)
-    : _out_channels(out_channels), _featmap_strides(featmap_strides), _type(type), _output_size(output_size),
-      _sampling_ratio(sampling_ratio), _finest_scale(finest_scale)
+RoIExtractorImpl::RoIExtractorImpl(int featmap_strides, std::string_view type, std::vector<int> output_size,
+                                   int sampling_ratio)
+    : _featmap_strides{featmap_strides}, _output_size{std::move(output_size)}, _sampling_ratio{sampling_ratio}
 {
     assert(type == "RoIAlign" || type == "RoIPool" && "RoIExtractor only support type RoIAlign or RoIPool");
-    assert(output_size.size() == 2 && "RoIExtractor's output_size must be of size 2");
+    assert(_output_size.size() == 2 && "RoIExtractor's output_size must be of size 2");
     if (type == "RoIPool")
     {
         _roi_type = roi_type::RoIPool;
     }
 }
 
-RoIExtractorImpl::RoIExtractorImpl(const boost::property_tree::ptree &opts)
+RoIExtractorImpl::RoIExtractorImpl(const boost::json::value &opts)
+    : RoIExtractorImpl(opts.at("featmap_strides").as_int64(), opts.at("type").as_string().c_str(),
+                       boost::json::value_to<std::vector<int>>(opts.at("output_size")),
+                       opts.at("sampling_ratio").as_int64())
 {
-    _out_channels = opts.get<int>("out_channels");
-    _featmap_strides = opts.get<int>("featmap_strides");
-    _type = opts.get<std::string>("type");
-    const auto &output_size_node = opts.get_child("output_size");
-    std::transform(output_size_node.begin(), output_size_node.end(), std::back_inserter(_output_size),
-                   [](const boost::property_tree::ptree::value_type &v) { return v.second.get_value<int>(); });
-    _sampling_ratio = opts.get<int>("sampling_ratio");
-    _finest_scale = opts.get<int>("finest_scale");
-
-    assert(_type == "RoIAlign" || _type == "RoIPool" && "RoIExtractor only support type RoIAlign or RoIPool");
-    assert(_output_size.size() == 2 && "RoIExtractor's output_size must be of size 2");
-    if (_type == "RoIPool")
-    {
-        _roi_type = roi_type::RoIPool;
-    }
 }
 
 torch::Tensor RoIExtractorImpl::forward(torch::Tensor feat, torch::Tensor rois)
@@ -70,40 +59,16 @@ torch::Tensor RoIExtractorImpl::forward(torch::Tensor feat, torch::Tensor rois)
    class RCNNHead
 
  */
-RCNNHeadImpl::RCNNHeadImpl(int in_channels, const std::vector<int> &fc_out_channels, int num_classes, int roi_feat_size,
-                           const boost::property_tree::ptree &roi_extractor_opts,
-                           const boost::property_tree::ptree &bbox_coder_opts,
-                           const boost::property_tree::ptree &loss_cls_opts,
-                           const boost::property_tree::ptree &loss_bbox_opts,
-                           const boost::property_tree::ptree &train_opts, const boost::property_tree::ptree &test_opts)
-    : _in_channels(in_channels), _fc_out_channels(fc_out_channels), _num_classes(num_classes),
-      _roi_feat_size(roi_feat_size), _roi_extractor_opts(roi_extractor_opts), _bbox_coder_opts(bbox_coder_opts),
-      _loss_cls_opts(loss_cls_opts), _loss_bbox_opts(loss_bbox_opts), _train_opts(train_opts), _test_opts(test_opts),
-      _bbox_coder(bbox_coder_opts), _bbox_assigner(train_opts.get_child("bbox_assigner_opts")),
-      _roi_extractor(roi_extractor_opts)
+RCNNHeadImpl::RCNNHeadImpl(int in_channels, const std::vector<long> &fc_out_channels, int num_classes,
+                           int roi_feat_size, const boost::json::value &roi_extractor_opts,
+                           const boost::json::value &bbox_coder_opts, const boost::json::value &loss_cls_opts,
+                           const boost::json::value &loss_bbox_opts, const boost::json::value &train_opts,
+                           const boost::json::value &test_opts)
+    : _num_classes(num_classes), _test_opts{test_opts}, _bbox_coder(bbox_coder_opts),
+      _bbox_assigner(train_opts.at("bbox_assigner_opts")), _roi_extractor(roi_extractor_opts)
 {
-    init();
-}
-
-RCNNHeadImpl::RCNNHeadImpl(const boost::property_tree::ptree &opts)
-    : _in_channels(opts.get<int>("in_channels")), _num_classes(opts.get<int>("num_classes")),
-      _roi_feat_size(opts.get<int>("roi_feat_size")), _roi_extractor_opts(opts.get_child("roi_extractor_opts")),
-      _bbox_coder_opts(opts.get_child("bbox_coder_opts")), _loss_cls_opts(opts.get_child("loss_cls_opts")),
-      _loss_bbox_opts(opts.get_child("loss_bbox_opts")), _train_opts(opts.get_child("train_opts")),
-      _test_opts(opts.get_child("test_opts")), _bbox_coder(_bbox_coder_opts),
-      _bbox_assigner(_train_opts.get_child("bbox_assigner_opts")), _roi_extractor(_roi_extractor_opts)
-{
-    const auto &fc_out_channels_node = opts.get_child("fc_out_channels");
-    std::transform(fc_out_channels_node.begin(), fc_out_channels_node.end(), std::back_inserter(_fc_out_channels),
-                   [](const boost::property_tree::ptree::value_type &v) { return v.second.get_value<int>(); });
-
-    init();
-}
-
-void RCNNHeadImpl::init()
-{
-    int fc_in = _in_channels * _roi_feat_size * _roi_feat_size;
-    for (auto fc_out : _fc_out_channels)
+    std::int64_t fc_in = in_channels * roi_feat_size * roi_feat_size;
+    for (auto fc_out : fc_out_channels)
     {
         auto linear = torch::nn::Linear(fc_in, fc_out);
         torch::nn::init::xavier_uniform_(linear->weight);
@@ -112,11 +77,11 @@ void RCNNHeadImpl::init()
         _shared_fcs->push_back(torch::nn::ReLU(torch::nn::ReLUOptions(true)));
         fc_in = fc_out;
     }
-    _classifier = torch::nn::Linear(_fc_out_channels.back(), _num_classes + 1);
-    _regressor = torch::nn::Linear(_fc_out_channels.back(), _num_classes * 4);
+    _classifier = torch::nn::Linear(fc_out_channels.back(), _num_classes + 1);
+    _regressor = torch::nn::Linear(fc_out_channels.back(), _num_classes * 4);
 
-    _loss_cls = loss::build_loss(_loss_cls_opts);
-    _loss_bbox = loss::build_loss(_loss_bbox_opts);
+    _loss_cls = loss::build_loss(loss_cls_opts);
+    _loss_bbox = loss::build_loss(loss_bbox_opts);
 
     register_module("roi_extractor", _roi_extractor);
     register_module("shared_fc", _shared_fcs);
@@ -129,6 +94,15 @@ void RCNNHeadImpl::init()
     torch::nn::init::normal_(_regressor->weight, 0, 0.001);
     torch::nn::init::constant_(_classifier->bias, 0.0);
     torch::nn::init::constant_(_regressor->bias, 0.0);
+}
+
+RCNNHeadImpl::RCNNHeadImpl(const boost::json::value &opts)
+    : RCNNHeadImpl(opts.at("in_channels").as_int64(),
+                   boost::json::value_to<std::vector<long>>(opts.at("fc_out_channels")),
+                   opts.at("num_classes").as_int64(), opts.at("roi_feat_size").as_int64(),
+                   opts.at("roi_extractor_opts"), opts.at("bbox_coder_opts"), opts.at("loss_cls_opts"),
+                   opts.at("loss_bbox_opts"), opts.at("train_opts"), opts.at("test_opts"))
+{
 }
 
 void RCNNHeadImpl::set_fcs(torch::nn::Sequential fcs)
@@ -182,7 +156,7 @@ std::tuple<torch::Tensor, torch::Tensor> RCNNHeadImpl::forward_train(
     bbox_outs = bbox_outs.index({torch::arange(num_tars), tar_labels, Slice()}); // [n, 4]
 
     auto bbox_pred = torch::Tensor(), bbox_tar = torch::Tensor();
-    if (_loss_bbox_opts.get<std::string>("type") == "GIoULoss")
+    if (std::dynamic_pointer_cast<loss::GIoULoss>(_loss_bbox) != nullptr)
     {
         bbox_tar = tar_bboxes;
         bbox_pred = _bbox_coder.decode(tar_rois, bbox_outs);
@@ -217,7 +191,9 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> RCNNHeadImpl::forward_te
 
     auto pred_bboxes = _bbox_coder.decode(rois, bbox_outs.view({-1, 4}), example.img_shape);
     pred_bboxes = pred_bboxes.view({num_rois, -1});
-    auto nms_res = bbox::multiclass_nms(pred_bboxes, cls_scores, 0.5, 0.05, 100);
+    auto nms_res =
+        bbox::multiclass_nms(pred_bboxes, cls_scores, _test_opts.at("nms_thr").as_double(),
+                             _test_opts.at("score_thr").as_double(), _test_opts.at("max_per_img").as_int64());
     return nms_res; // bboxes, scores, labels
 }
 

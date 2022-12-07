@@ -1,6 +1,8 @@
 #include "rpn_head.h"
 #include "anchor.h"
 
+#include <torchvision/ops/nms.h>
+
 #include <array>
 #include <cassert>
 #include <tuple>
@@ -9,21 +11,18 @@ namespace rpn_head
 {
 using namespace torch::indexing;
 
-RPNHeadImpl::RPNHeadImpl(int in_channels, const boost::property_tree::ptree &anchor_opts,
-                         const boost::property_tree::ptree &bbox_coder_opts,
-                         const boost::property_tree::ptree &loss_cls_opts,
-                         const boost::property_tree::ptree &loss_bbox_opts,
-                         const boost::property_tree::ptree &train_opts, const boost::property_tree::ptree &test_opts)
-    : _in_channels(in_channels), _anchor_opts(anchor_opts), _bbox_coder_opts(bbox_coder_opts),
-      _loss_cls_opts(loss_cls_opts), _loss_bbox_opts(loss_bbox_opts), _train_opts(train_opts), _test_opts(test_opts),
-      _bbox_coder(bbox_coder_opts), _anchor_generator(anchor_opts),
-      _bbox_assigner(train_opts.get_child("bbox_assigner_opts"))
+RPNHeadImpl::RPNHeadImpl(const std::int64_t in_channel, const std::int64_t out_channel,
+                         const boost::json::value &anchor_opts, const boost::json::value &bbox_coder_opts,
+                         const boost::json::value &loss_cls_opts, const boost::json::value &loss_bbox_opts,
+                         const boost::json::value &train_opts, const boost::json::value &test_opts)
+    : _train_opts{train_opts}, _test_opts{test_opts}, _bbox_coder{bbox_coder_opts}, _anchor_generator{anchor_opts},
+      _bbox_assigner{train_opts.at("bbox_assigner_opts")}
 {
     _class_channels = 1; // use sigmoid, so class channel is 1, or 2 when softmax
-    _conv = torch::nn::Conv2d(torch::nn::Conv2dOptions(_in_channels, 512, 3).stride(1).padding(1));
-    _classifier =
-        torch::nn::Conv2d(torch::nn::Conv2dOptions(512, _anchor_generator->num_anchors() * _class_channels /* 9 */, 1));
-    _regressor = torch::nn::Conv2d(torch::nn::Conv2dOptions(512, _anchor_generator->num_anchors() * 4, 1));
+    _conv = torch::nn::Conv2d(torch::nn::Conv2dOptions(in_channel, out_channel, 3).stride(1).padding(1));
+    _classifier = torch::nn::Conv2d(
+        torch::nn::Conv2dOptions(out_channel, _anchor_generator->num_anchors() * _class_channels /* 9 */, 1));
+    _regressor = torch::nn::Conv2d(torch::nn::Conv2dOptions(out_channel, _anchor_generator->num_anchors() * 4, 1));
     _loss_cls = loss::build_loss(loss_cls_opts);
     _loss_bbox = loss::build_loss(loss_bbox_opts);
     register_module("conv", _conv);
@@ -42,10 +41,10 @@ RPNHeadImpl::RPNHeadImpl(int in_channels, const boost::property_tree::ptree &anc
     torch::nn::init::constant_(_regressor->bias, 0);
 }
 
-RPNHeadImpl::RPNHeadImpl(const boost::property_tree::ptree &opts)
-    : RPNHeadImpl(opts.get<int>("in_channels"), opts.get_child("anchor_opts"), opts.get_child("bbox_coder_opts"),
-                  opts.get_child("loss_cls_opts"), opts.get_child("loss_bbox_opts"), opts.get_child("train_opts"),
-                  opts.get_child("test_opts"))
+RPNHeadImpl::RPNHeadImpl(const boost::json::value &opts)
+    : RPNHeadImpl(opts.at("in_channels").as_int64(), opts.at("out_channels").as_int64(), opts.at("anchor_opts"),
+                  opts.at("bbox_coder_opts"), opts.at("loss_cls_opts"), opts.at("loss_bbox_opts"),
+                  opts.at("train_opts"), opts.at("test_opts"))
 {
 }
 
@@ -104,7 +103,7 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> RPNHeadImpl::forward_tra
     auto tar_bboxes = assigned_result.gt_bboxes.index({tar_inds});
 
     auto bbox_pred = torch::Tensor(), bbox_tar = torch::Tensor();
-    if (_loss_bbox_opts.get<std::string>("type") == "GIoULoss")
+    if (std::dynamic_pointer_cast<loss::GIoULoss>(_loss_bbox) != nullptr)
     {
         bbox_tar = tar_bboxes;
         bbox_pred = _bbox_coder.decode(tar_anchors, bbox_out.index({chosen}));
@@ -128,49 +127,44 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> RPNHeadImpl::forward_tra
 //   nms_post: number of proposals to select after batched nms
 //   nms_thr: iou_thr to be used in NMS
 //   min_bbox_size: filter bbox with size < min_bbox_size
-torch::Tensor RPNHeadImpl::get_proposals(torch::Tensor anchors,  // [grid_h * grid_w * num_anchors, 4]
-                                         torch::Tensor cls_out,  // [n * grid_h * grid_w * num_anchors, 1]
-                                         torch::Tensor bbox_out, // [n * grid_h * grid_w * num_anchors, 4]
+torch::Tensor RPNHeadImpl::get_proposals(torch::Tensor anchors,    // [grid_h * grid_w * num_anchors, 4]
+                                         torch::Tensor cls_out,    // [n * grid_h * grid_w * num_anchors, 1]
+                                         torch::Tensor bbox_delta, // [n * grid_h * grid_w * num_anchors, 4]
                                          const std::vector<int64_t> &img_shape, // (h, w)
-                                         const boost::property_tree::ptree &opts)
+                                         const boost::json::value &opts)
 {
-    assert(cls_out.size(0) == bbox_out.size(0) && "cls_outs and bbox_outs must have same number of levels");
-
-    torch::Tensor score, delta, anchor, idx;
+    assert(cls_out.size(0) == bbox_delta.size(0) && "cls_outs and bbox_delta must have same number of levels");
 
     auto cls_score = cls_out.view(-1).sigmoid();
-    if (int nms_pre = opts.get<int>("nms_pre"); nms_pre < cls_score.size(0))
+    if (auto nms_pre = opts.at("nms_pre").as_int64(); nms_pre < cls_score.size(0))
     {
         auto topk_inds = std::get<1>(cls_score.topk(nms_pre));
         cls_score = cls_score.index({topk_inds});
-        bbox_out = bbox_out.index({topk_inds});
+        bbox_delta = bbox_delta.index({topk_inds});
         anchors = anchors.index({topk_inds});
     }
 
-    idx = torch::full({cls_score.size(0)}, 0, torch::kInt64).to(cls_score.device());
+    auto bbox = _bbox_coder.decode(anchors, bbox_delta, img_shape);
 
-    auto all_bbox = _bbox_coder.decode(anchors, bbox_out, img_shape);
-
-    if (int min_bbox_size = opts.get<int>("min_bbox_size"); min_bbox_size > 0)
+    if (auto min_bbox_size = opts.at("min_bbox_size").as_int64(); min_bbox_size > 0)
     {
-        auto large_mask = ((all_bbox.index({Slice(), 2}) - all_bbox.index({Slice(), 0})) >= min_bbox_size) &
-                          ((all_bbox.index({Slice(), 3}) - all_bbox.index({Slice(), 1})) >= min_bbox_size);
+        auto large_mask = ((bbox.index({Slice(), 2}) - bbox.index({Slice(), 0})) >= min_bbox_size) &
+                          ((bbox.index({Slice(), 3}) - bbox.index({Slice(), 1})) >= min_bbox_size);
         cls_score = cls_score.index({large_mask});
-        all_bbox = all_bbox.index({large_mask});
-        idx = idx.index({large_mask});
+        bbox = bbox.index({large_mask});
     }
 
-    auto keep = bbox::batched_nms(all_bbox, cls_score, idx, opts.get<float>("nms_thr"));
+    auto keep = vision::ops::nms(bbox, cls_score, opts.at("nms_thr").as_double());
     // proposals are [n, 5] tensors where last index is score
-    auto proposals = torch::cat({all_bbox.index({keep}), cls_score.index({keep}).view({-1, 1})}, 1);
-    if (int nms_post = opts.get<int>("nms_post"); nms_post < proposals.size(0))
+    auto proposals = torch::cat({bbox.index({keep}), cls_score.index({keep}).view({-1, 1})}, 1);
+    if (auto nms_post = opts.at("nms_post").as_int64(); nms_post < proposals.size(0))
     {
         proposals = proposals.index({Slice(None, nms_post)});
     }
     return proposals;
 }
 
-torch::Tensor RPNHeadImpl::forward_test(torch::Tensor feat, const dataset::DetectionExample &img_data)
+torch::Tensor RPNHeadImpl::forward_test(torch::Tensor feat, const dataset::DetectionExample &example)
 {
     auto rpn_outs = forward(feat);
     auto cls_out = std::get<0>(rpn_outs), bbox_out = std::get<1>(rpn_outs);
@@ -183,7 +177,7 @@ torch::Tensor RPNHeadImpl::forward_test(torch::Tensor feat, const dataset::Detec
     anchors = anchors.reshape({-1, 4});               // [grid_h * grid_w * num_anchors, 4]
 
     /*************** get proposals *************/
-    return get_proposals(anchors, cls_out, bbox_out, img_data.img_shape, _test_opts);
+    return get_proposals(anchors, cls_out, bbox_out, example.img_shape, _test_opts);
 }
 
 } // namespace rpn_head

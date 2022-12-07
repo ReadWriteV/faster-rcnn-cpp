@@ -13,21 +13,20 @@
 
 namespace detector
 {
-FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::property_tree::ptree &backbone_opts,
-                                         const boost::property_tree::ptree &rpn_opts,
-                                         const boost::property_tree::ptree &rcnn_opts)
+FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::json::value &cfg)
 {
-    assert(backbone_opts.get<std::string>("type") == "vgg16");
+    const auto &backbone_opts = cfg.at("backbone");
+    assert(backbone_opts.at("type") == "vgg16");
     auto vgg16 = vision::models::VGG16();
 
-    rpn = rpn_head::RPNHead(rpn_opts);
-    rcnn = rcnn_head::RCNNHead(rcnn_opts);
+    rpn = rpn_head::RPNHead(cfg.at("rpn_head"));
+    rcnn = rcnn_head::RCNNHead(cfg.at("rcnn_head"));
 
     // weight initialization is included in constructor for all modules except for
     // initializing backbone with ImageNet pretrained weight
-    std::string pretrained = backbone_opts.get<std::string>("pretrained");
+    const auto &pretrained = backbone_opts.at("pretrained").as_string();
     std::cout << "loading weights for backbone...\n";
-    torch::load(vgg16, pretrained);
+    torch::load(vgg16, pretrained.c_str());
 
     /// I have no idea why the following code cannot be compiled, so I use dynamic cast instead.
     /// ```

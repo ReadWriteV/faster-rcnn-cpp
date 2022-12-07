@@ -25,7 +25,7 @@ namespace eval
 
 std::size_t get_category_id(std::string_view name)
 {
-    return std::distance(voc_categories.begin(), std::find(voc_categories.begin(), voc_categories.end(), name));
+    return std::distance(categories.begin(), std::find(categories.begin(), categories.end(), name));
 }
 
 float VOC_ap(const std::valarray<float> &recall, const std::valarray<float> &precision, bool use_07_metric)
@@ -266,10 +266,10 @@ std::tuple<float, float, float> VOCEval(std::string_view result_path, std::strin
     return {prec[prec.size() - 1], rec[rec.size() - 1], ap};
 }
 
-std::tuple<const std::array<float, voc_categories.size()>, const std::array<float, voc_categories.size()>,
-           const std::array<float, voc_categories.size()>>
+std::tuple<const std::array<float, categories.size()>, const std::array<float, categories.size()>,
+           const std::array<float, categories.size()>>
 VOCEval(std::string_view result_path, std::string_view anno_path, std::string_view imageset_path,
-        const std::array<std::string_view, voc_categories.size()> &class_names, float thresh, bool use_07_metric)
+        const std::array<std::string_view, categories.size()> &class_names, float thresh, bool use_07_metric)
 {
     return {};
 }

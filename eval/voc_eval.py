@@ -243,10 +243,12 @@ def _do_python_eval(result_path, anno_path, imageset_path, class_names):
 
 
 if __name__ == '__main__':
-    result_path = "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/faster-rcnn-cpp/output/voc_vgg16/result/"
-    anno_path = "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/VOCdevkit/VOC2007/Annotations"
-    imageset_path = "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/VOCdevkit/VOC2007/ImageSets/Main/test.txt"
-    class_names = ["aeroplane",    "bicycle", "bird",   "boat",       "bottle",    "bus",          "car",     "cat",    "chair",
-                   "cow",    "diningtable", "dog",    "horse", "motorbike", "person",    "pottedplant", "sheep",  "sofa",  "train",     "tvmonitor"]
+    result_path = "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/faster-rcnn-cpp/output/FoggyCityscapes_vgg16/result/"
+    anno_path = "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/FoggyCityscapes/VOC2007/Annotations"
+    imageset_path = "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/FoggyCityscapes/VOC2007/ImageSets/Main/test.txt"
+    # class_names = ["aeroplane",    "bicycle", "bird",   "boat",       "bottle",    "bus",          "car",     "cat",    "chair",
+    #                "cow",    "diningtable", "dog",    "horse", "motorbike", "person",    "pottedplant", "sheep",  "sofa",  "train",     "tvmonitor"]
+    class_names = ["person", "rider", "car", "truck",
+                   "bus", "train", "motorcycle", "bicycle"]
 
     _do_python_eval(result_path, anno_path, imageset_path, class_names)
