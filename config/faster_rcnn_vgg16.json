@@ -1,6 +1,6 @@
 {
     "data": {
-        "dataset_path": "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/FoggyCityscapes/VOC2007",
+        "dataset_path": "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/VOCdevkit/VOC2007",
         "train_transforms": {
             "img_scale": [
                 1000,
@@ -107,10 +107,10 @@
         "rcnn_head": {
             "in_channels": 512,
             "fc_out_channels": [
-                1024,
-                1024
+                4096,
+                4096
             ],
-            "num_classes": 8,
+            "num_classes": 20,
             "roi_feat_size": 7,
             "roi_extractor_opts": {
                 "featmap_strides": 16,
@@ -178,5 +178,5 @@
     "batch_size": 1,
     "save_ckpt_period": 2,
     "log_period": 100,
-    "work_dir": "FoggyCityscapes_vgg16"
+    "work_dir": "voc_vgg16"
 }

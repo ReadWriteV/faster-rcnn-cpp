@@ -36,8 +36,8 @@ VOCDataset::VOCDataset(const std::filesystem::path &root, Mode mode, bool non_di
     std::transform(categories.begin(), categories.end(),
                    std::inserter(categories_name_to_id, categories_name_to_id.begin()),
                    [i = 0ULL](std::string_view e) mutable { return std::make_pair(e, i++); });
-
-    auto index_file_path = root / "ImageSets" / "Main" / (mode == Mode::train ? "train.txt" : "test.txt");
+    // TODO: configurable ImageSets file
+    auto index_file_path = root / "ImageSets" / "Main" / (mode == Mode::train ? "trainval.txt" : "test.txt");
     auto annotation_path = root / "Annotations";
 
     std::ifstream file(index_file_path);

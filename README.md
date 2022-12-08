@@ -10,47 +10,47 @@ Faster RCNN 的 libtorch 实现。
 ## Todo
 
 + 数据集变换采用 libtorch 的 *Transform* 接口
-+ 使用 boost::json 而非 boost::property_tree::ptree 加载配置文件
 
 ## Benchmark
 
-PASCAL VOC 2007 (Train/Test: 07trainval/07test, non-difficult, ROI Align)
+### PASCAL VOC 2007 (Train/Test: 07trainval/07test, non-difficult)
 
-### ResNet50_FPN (COCO Metric and VOC Metric)
-
-| COCO Metric | AP | AP50 |
-| ---------- | -------- | ---------- |
-|  this  |  0.439   | 0.767 |
-| mmdet | 0.437 | 0.769 |
-|  base  |0.438 | 0.768|
-
-|    VOC Metric        | AP |
-| ---------- | -------- |
-|  this  |  0.7581   |
-|  best  |  0.7606   |
-
-### VGG16 (VOC Metric)
-
-batch size: 1, lr: 0.00125, decay epoch: 9 12, total epoch: 12 
-
-|    this        | AP |
-| ---------- | -------- |
-| VGG-feature + VGG-classifier + random-flipped |  0.6615   |
-| VGG-feature + classifier + random-flipped |  0.6751   |
-| VGG-feature + classifier + append-flipped |  0.6796   |
+batch size: 1, lr: 0.00125, decay epoch: 9 12, total epoch: 12
 
 batch size: 1, lr: 1e-3, decay epoch: 5, total epoch: 6 
 
-|    Pytorch        | AP |
+| COCO Metric | AP | AP50 |
+| ---------- | -------- | ---------- |
+|  ResNet50_FPN (this)  |  0.439   | 0.767 |
+| ResNet50_FPN (mmdet) | 0.437 | 0.769 |
+|  ResNet50_FPN (base)  |0.438 | 0.768|
+
+|    VOC Metric        | mAP |
 | ---------- | -------- |
-| VGG-feature + VGG-classifier + without flipped  |  0.674   |
-| VGG-feature + VGG-classifier + without flipped + my-dataset  |  0.676   |
-| VGG-feature + VGG-classifier + with flipped  |  0.7010   |
+|  ResNet50_FPN (this)  |  0.7581   |
+|  VGG16:VGG-feature + 1024*1024 + random-flip (this)  |  0.6708   |
+|  VGG16:VGG-feature + 4096*4096 + random-flip (this)  | 0.6751   |
+|  VGG16:VGG-feature + VGG-classifier + random-flip (this)  | 0.6650   |
+|  VGG16:VGG-feature + VGG-classifier + without-flip (this)  | 0.6478   |
+|  VGG16:VGG-feature + ?classifier + append-flip (this)  | 0.6796   |
+|  VGG16:VGG-feature + VGG-classifier + without-flip (Pytorch)  |  0.674   |
+|  VGG16:VGG-feature + VGG-classifier + append-flip (Pytorch)  |  0.7010   |
 
+### Foggy Cityscapes (Train/Test: train/val)
 
+batch size: 1, lr: 0.00125, decay epoch: 9 12, total epoch: 12
 
+batch size: 1, lr: 2e-3, decay epoch: 6, total epoch: 12 
 
-
+|    VOC Metric        | mAP |
+| ---------- | -------- |
+|  ResNet50_FPN (this)  |  0.4387   |
+|  VGG16:VGG-feature + 1024*1024 + random-flip (this)  |  0.2792   |
+|  VGG16:VGG-feature + 4096*4096 + random-flip (this)  | 0.2919   |
+|  VGG16:VGG-feature + VGG-classifier + random-flip (this)  | ?   |
+| VGG16:VGG-feature + 4096*4096 + rpn_conv1_512 + random-flip (this) |  0.2844  |
+|  VGG16:VGG-feature + ?classifier + append-flip (this)  | ?   |
+|  VGG16:VGG-feature + VGG-classifier + append-flip (Pytorch)  |  0.4847   |
 
 ## Acknowledgement
 

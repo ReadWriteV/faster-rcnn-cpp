@@ -40,12 +40,13 @@ class VOCDataset : public torch::data::datasets::Dataset<VOCDataset, DetectionEx
     static constexpr std::string_view get_category_name(std::size_t i);
     static std::size_t get_category_id(std::string_view i);
 
-    // static constexpr std::array<std::string_view, num_class> categories = {
-    //     "aeroplane" /*0*/, "bicycle", "bird",        "boat",     "bottle", "bus",       "car",    "cat",
-    //     "chair",           "cow",     "diningtable", "dog",      "horse",  "motorbike", "person", "pottedplant",
-    //     "sheep",           "sofa",    "train",       "tvmonitor"};
-    static constexpr std::array categories = {"person", "rider", "car",        "truck",
-                                              "bus",    "train", "motorcycle", "bicycle"};
+    // TODO: configurable category
+    static constexpr std::array categories = {
+        "aeroplane" /*0*/, "bicycle", "bird",        "boat",     "bottle", "bus",       "car",    "cat",
+        "chair",           "cow",     "diningtable", "dog",      "horse",  "motorbike", "person", "pottedplant",
+        "sheep",           "sofa",    "train",       "tvmonitor"};
+    // static constexpr std::array categories = {"person", "rider", "car",        "truck",
+    //                                           "bus",    "train", "motorcycle", "bicycle"};
 
     static constexpr std::size_t num_class = categories.size();
 

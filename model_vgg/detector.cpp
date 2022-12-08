@@ -77,7 +77,7 @@ FasterRCNNVGG16Impl::FasterRCNNVGG16Impl(const boost::json::value &cfg)
     //     {
     //         RCNN_top->push_back(M);
     //     }
-    //     else if (auto M = std::dynamic_pointer_cast<torch::nn::ReLUImpl>(module))
+    //     else if (auto M = std::dynamic_pointer_cast<torch::nn::FunctionalImpl>(module))
     //     {
     //         RCNN_top->push_back(M);
     //     }
