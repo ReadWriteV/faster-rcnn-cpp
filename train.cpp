@@ -114,6 +114,11 @@ int main(int argc, char **argv)
         const auto &lr_opts = cfg.at("lr_opts");
 
         const auto &decay_epochs = lr_opts.at("decay_epochs").as_array();
+        const auto warmup_steps = lr_opts.at("warmup_steps").as_int64();
+        const auto warmup_start = lr_opts.at("warmup_start").as_double();
+
+        std::cout << "warmup_steps: " << warmup_steps << std::endl;
+        std::cout << "warmup_start: " << warmup_start << std::endl;
 
         const auto total_epochs = cfg.at("total_epochs").as_int64();
         const auto save_ckpt_period = cfg.at("save_ckpt_period").as_int64();
@@ -156,8 +161,18 @@ int main(int argc, char **argv)
                 // check if lr needs to be warmed up at the begining
                 auto img_data = img_datas[0];
                 img_data.to(_device);
-                model->zero_grad();
+                // warmup lr
+                auto iters = pg_tracker.cur_iter();
+                if (iters <= warmup_steps)
+                {
+                    auto lr = warmup_start * epoch_lr + (1 - warmup_start) * iters / warmup_steps * epoch_lr;
+                    for (auto &group : optimizer->param_groups())
+                    {
+                        static_cast<torch::optim::SGDOptions &>(group.options()).lr(lr);
+                    }
+                }
                 auto model_loss = model->forward_train(img_data);
+                // sum loss
                 auto tot_loss = torch::tensor(0, torch::TensorOptions().dtype(torch::kFloat32).device(_device));
                 for (const auto &loss : model_loss)
                 {
