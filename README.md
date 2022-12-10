@@ -56,8 +56,8 @@ batch size: 1, lr: 1e-3, decay epoch: 5, total epoch: 6
 |  VGG16:VGG-feature + VGG-classifier + random-flip (this)  | 0.6650   |
 |  VGG16:VGG-feature + VGG-classifier + append-flip (this)  | 0.6664(12) 0.6685(10) |
 |  VGG16:VGG-feature + VGG-classifier + without-flip (Pytorch)  |  0.674   |
-|  VGG16:VGG-feature + VGG-classifier + append-flip (Pytorch)  |  **0.7010**   |
-
+|[Original Paper](https://arxiv.org/abs/1506.01497)|0.699|
+|  [VGG16:VGG-feature + VGG-classifier + append-flip (Pytorch)](https://github.com/jwyang/faster-rcnn.pytorch)  |  **0.701**   |
 ## Acknowledgement
 
 This project is based on the following project:
