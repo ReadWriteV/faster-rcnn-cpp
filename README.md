@@ -19,19 +19,17 @@ An implementation of Faster R-CNN with VGG16 backbone (https://arxiv.org/pdf/150
 ## Build
 
 ```bash
-
 cd faster-rcnn-cpp
 
 cmake -S . -B build -DCMAKE_PREFIX_PATH=path_to_libtorch -DCMAKE_PREFIX_PATH=path_to_torchvision -DCMAKE_PREFIX_PATH=path_to_opencv -DCMAKE_PREFIX_PATH=path_to_boost
 
 cmake --build build
-
 ```
 
 ## Todo
 
-+ 数据集变换采用 libtorch 的 *Transform* 接口
-+ 优化评价方法，测试后自动进行评价
++ Implement the dataset transform with the interface of libtorch
++ Integrate evaluation into dataset and automatically run evaluation after test
 
 ## Benchmark
 
