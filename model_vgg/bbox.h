@@ -19,8 +19,7 @@ class BBoxRegressCoder
     // calculate delta given base bboxes and target bboxes
     torch::Tensor encode(torch::Tensor base, torch::Tensor bboxes);
     // calculate bboxes given base bboxes and delta
-    torch::Tensor decode(torch::Tensor base, torch::Tensor delta,
-                         const std::vector<int64_t> &max_shape = std::vector<int64_t>());
+    torch::Tensor decode(torch::Tensor base, torch::Tensor delta, const std::vector<int64_t> &max_shape = {});
 
   private:
     std::vector<float> _means;
