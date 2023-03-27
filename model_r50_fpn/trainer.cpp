@@ -12,7 +12,8 @@ BasicTrainer::BasicTrainer(const boost::property_tree::ptree &pt)
     : _pg_tracker(0, 0), _opts(pt), _device(torch::kCUDA, static_cast<torch::DeviceIndex>(pt.get("gpu", -1)))
 {
     // construct VOC dataset
-    _dataset = std::make_shared<dataset::VOCDataset>(_opts.get<std::string>("data.dataset_path"), dataset::Mode::train);
+    _dataset = std::make_shared<dataset::VOCDataset>(_opts.get<std::string>("data.dataset_path"),
+                                                     dataset::VOCDataset::Mode::trainval);
 
     // construct COCO dataset
     // _dataset = std::make_shared<dataset::COCODataset>(_opts.get<std::string>("data.dataset_image_path"),
