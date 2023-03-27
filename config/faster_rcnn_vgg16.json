@@ -106,6 +106,7 @@
         },
         "rcnn_head": {
             "in_channels": 512,
+            "use_vgg_fc": true,
             "fc_out_channels": [
                 4096,
                 4096
