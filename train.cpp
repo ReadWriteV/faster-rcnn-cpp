@@ -82,7 +82,7 @@ int main(int argc, char **argv)
         torch::Device _device(torch::kCUDA, static_cast<torch::DeviceIndex>(gpu_id));
 
         auto dataset = std::make_unique<dataset::VOCDataset>(cfg.at_pointer("/data/dataset_path").as_string().c_str(),
-                                                             dataset::Mode::train);
+                                                             dataset::VOCDataset::Mode::trainval);
         std::cout << "train size: " << dataset->size().value() << std::endl;
 
         auto model = detector::FasterRCNNVGG16(cfg.at("model"));

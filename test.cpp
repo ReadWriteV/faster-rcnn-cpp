@@ -91,7 +91,7 @@ int main(int argc, char **argv)
         model->eval();
         model->to(device);
         auto dataset = std::make_shared<dataset::VOCDataset>(cfg.at_pointer("/data/dataset_path").as_string().c_str(),
-                                                             dataset::Mode::test);
+                                                             dataset::VOCDataset::Mode::test);
         std::cout << "test size: " << dataset->size().value() << std::endl;
 
         utils::ProgressTracker pg_tracker(1, dataset->size().value());

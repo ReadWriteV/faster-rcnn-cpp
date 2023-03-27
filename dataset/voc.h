@@ -16,17 +16,19 @@
 namespace dataset
 {
 
-/// The mode in which the dataset is loaded.
-enum class Mode
-{
-    train,
-    test
-};
-
 /// @brief fetch annotation, read image and does transforms
 class VOCDataset : public torch::data::datasets::Dataset<VOCDataset, DetectionExample>
 {
   public:
+    /// The mode in which the dataset is loaded.
+    enum class Mode
+    {
+        train,
+        val,
+        trainval,
+        test
+    };
+
     VOCDataset(const std::filesystem::path &root, Mode mode = Mode::train, bool non_difficult = true);
 
     /// @brief fetch all data of idx-th image
@@ -37,26 +39,22 @@ class VOCDataset : public torch::data::datasets::Dataset<VOCDataset, DetectionEx
     /// Returns the size of the dataset.
     torch::optional<size_t> size() const override;
 
-    static constexpr std::string_view get_category_name(std::size_t i);
-    static std::size_t get_category_id(std::string_view i);
-
     // TODO: configurable category
     static constexpr std::array categories = {
         "aeroplane" /*0*/, "bicycle", "bird",        "boat",     "bottle", "bus",       "car",    "cat",
         "chair",           "cow",     "diningtable", "dog",      "horse",  "motorbike", "person", "pottedplant",
         "sheep",           "sofa",    "train",       "tvmonitor"};
-    // static constexpr std::array categories = {"person", "rider", "car",        "truck",
-    //                                           "bus",    "train", "motorcycle", "bicycle"};
 
     static constexpr std::size_t num_class = categories.size();
 
     static std::unordered_map<std::string_view, std::size_t> categories_name_to_id; // map from categories_name to id
 
   private:
+    std::string get_mode_string();
     void transform(ExampleType &img_data, cv::Mat &image_data); // TODO: use map method
 
     std::filesystem::path root;
-    std::vector<std::string> examples_index; // map from image index to image name
+    std::vector<std::string> image_ids; // map from image index to image name
     std::unordered_map<std::size_t, DetectionExample::TargetType>
         example_anns; // map from image index to gt_bboxes and gt_labels
 

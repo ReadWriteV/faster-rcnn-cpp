@@ -29,42 +29,45 @@ VOCDataset::VOCDataset(const std::filesystem::path &root, Mode mode, bool non_di
     {
         throw std::runtime_error(root.string() + ": bad dataset path!");
     }
-    std::cout << "load VOC dataset from " << root << ", Mode: " << ((mode == Mode::train) ? "train" : "test")
-              << std::endl;
+    std::cout << "load VOC dataset from " << root << ", Mode: " << get_mode_string() << std::endl;
 
     // map from 0 get better performance then from 1
     std::transform(categories.begin(), categories.end(),
                    std::inserter(categories_name_to_id, categories_name_to_id.begin()),
                    [i = 0ULL](std::string_view e) mutable { return std::make_pair(e, i++); });
     // TODO: configurable ImageSets file
-    auto index_file_path = root / "ImageSets" / "Main" / (mode == Mode::train ? "trainval.txt" : "test.txt");
-    auto annotation_path = root / "Annotations";
+    auto imagesets_file_path = root / "ImageSets" / "Main" / get_mode_string().append(".txt");
+    auto annotations_path = root / "Annotations";
 
-    std::ifstream file(index_file_path);
-    if (file.fail())
+    std::ifstream imagesets_file(imagesets_file_path);
+    if (imagesets_file.fail())
     {
-        throw std::runtime_error("open " + index_file_path.string() + " failed");
+        throw std::runtime_error("open " + imagesets_file_path.string() + " failed");
     }
 
-    std::string example_index;
-    std::size_t i = 0;
-    while (std::getline(file, example_index))
+    std::string id;
+    std::size_t i{0};
+    while (std::getline(imagesets_file, id))
     {
-
         boost::property_tree::ptree pt;
-        boost::property_tree::read_xml(annotation_path / (example_index + ".xml"), pt);
+        std::string annotation_file_name{id + ".xml"};
+        boost::property_tree::read_xml(annotations_path / annotation_file_name, pt);
         std::vector<torch::Tensor> gt_bboxes, gt_labels;
-        auto objects = pt.get_child("annotation");
+        auto objects{pt.get_child("annotation")};
         for (const auto &object : objects)
         {
             if (object.first == "object")
             {
-                if (non_difficult && object.second.get<int>("difficult") > 0)
+                int difficult{object.second.get<int>("difficult")};
+                if (non_difficult && difficult > 0)
                 {
+                    // remove difficult objects if non_difficult is true
                     continue;
                 }
-                if (categories_name_to_id.find(object.second.get<std::string>("name")) == categories_name_to_id.end())
+                std::string name{object.second.get<std::string>("name")};
+                if (categories_name_to_id.find(name) == categories_name_to_id.end())
                 {
+                    // remove objects that are not of interest
                     continue;
                 }
                 std::vector<int> bbox{object.second.get<int>("bndbox.xmin"), object.second.get<int>("bndbox.ymin"),
@@ -80,19 +83,18 @@ VOCDataset::VOCDataset(const std::filesystem::path &root, Mode mode, bool non_di
         {
             continue;
         }
-        examples_index.push_back(example_index);
+        image_ids.push_back(std::move(id));
         example_anns[i].gt_bboxes = torch::cat(gt_bboxes).view({num, 4});
         example_anns[i].gt_labels = torch::cat(gt_labels);
         i++;
     }
-    // assert(examples_index.size() == (mode == Mode::train ? 2975 : 500));
-    std::cout << "total examples loaded: " << examples_index.size() << std::endl;
+    std::cout << "total examples loaded: " << image_ids.size() << std::endl;
 }
 
 DetectionExample VOCDataset::get(size_t index)
 {
     ExampleType example;
-    auto image_file_path = root / "JPEGImages" / (examples_index.at(index) + ".jpg");
+    auto image_file_path = root / "JPEGImages" / (image_ids.at(index) + ".jpg");
 
     auto image_mat = cv::imread(image_file_path, cv::IMREAD_COLOR);
     if (image_mat.empty())
@@ -104,7 +106,7 @@ DetectionExample VOCDataset::get(size_t index)
 
     // set gt_bboxes and gt_labels
     example.target = example_anns.at(index);
-    example.id = examples_index.at(index);
+    example.id = image_ids.at(index);
     // apply tansform
     transform(example, image_mat);
 
@@ -118,17 +120,24 @@ DetectionExample VOCDataset::get(size_t index)
 
 torch::optional<size_t> VOCDataset::size() const
 {
-    return examples_index.size();
+    return image_ids.size();
 }
 
-constexpr std::string_view VOCDataset::get_category_name(std::size_t i)
+std::string VOCDataset::get_mode_string()
 {
-    return categories.at(i);
-}
-
-std::size_t VOCDataset::get_category_id(std::string_view i)
-{
-    return categories_name_to_id.at(i);
+    switch (mode)
+    {
+    case Mode::train:
+        return "train";
+    case Mode::val:
+        return "val";
+    case Mode::trainval:
+        return "trainval";
+    case Mode::test:
+        return "test";
+    default:
+        return "unknown";
+    }
 }
 
 void VOCDataset::transform(ExampleType &example, cv::Mat &image_data)
@@ -147,7 +156,7 @@ void VOCDataset::transform(ExampleType &example, cv::Mat &image_data)
     example.scale_factor = scale_factor;
 
     // flip
-    if (mode == Mode::train)
+    if (mode == Mode::train || mode == Mode::trainval)
     {
         float flip_ratio = 0.5f;
         // same random sequence every run
