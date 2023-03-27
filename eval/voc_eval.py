@@ -107,7 +107,7 @@ def voc_eval(detpath,
     for imagename in imagenames:
         R = [obj for obj in recs[imagename] if obj['name'] == classname]
         bbox = np.array([x['bbox'] for x in R])
-        difficult = np.array([x['difficult'] for x in R]).astype(np.bool)
+        difficult = np.array([x['difficult'] for x in R]).astype(bool)
         det = [False] * len(R)
         npos = npos + sum(~difficult)
         class_recs[imagename] = {'bbox': bbox,
@@ -127,9 +127,6 @@ def voc_eval(detpath,
     nd = len(image_ids)
     tp = np.zeros(nd)
     fp = np.zeros(nd)
-
-    miou = 0
-    nump = 0
 
     if BB.shape[0] > 0:
         # sort by confidence
@@ -166,8 +163,6 @@ def voc_eval(detpath,
                 jmax = np.argmax(overlaps)
 
             if ovmax > ovthresh:
-                miou += ovmax
-                nump += 1
                 if not R['difficult'][jmax]:
                     if not R['det'][jmax]:
                         tp[d] = 1.
@@ -187,11 +182,9 @@ def voc_eval(detpath,
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
 
-    miss = fn / float(npos)
     ap = voc_ap(rec, prec, use_07_metric)
-    miou = miou/nump
 
-    return rec, prec, ap, miss, miou
+    return rec, prec, ap
 
 
 def _do_python_eval(result_path, anno_path, imageset_path, class_names):
@@ -211,7 +204,7 @@ def _do_python_eval(result_path, anno_path, imageset_path, class_names):
         if cls == '__background__':
             continue
         filename = os.path.join(result_path, '{:s}.txt')
-        rec, prec, ap, miss, miou = voc_eval(
+        rec, prec, ap = voc_eval(
             filename, annopath, imagesetfile, cls, ovthresh=0.5,
             use_07_metric=use_07_metric)
         aps += [ap]
@@ -243,7 +236,7 @@ def _do_python_eval(result_path, anno_path, imageset_path, class_names):
 
 
 if __name__ == '__main__':
-    result_path = "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/faster-rcnn-cpp/output/voc_vgg16/result/"
+    result_path = "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/faster-rcnn-cpp/output/voc_vgg16/result_10/"
     root = "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/VOCdevkit"
     anno_path = root + "/VOC2007/Annotations"
     imageset_path = root + "/VOC2007/ImageSets/Main/test.txt"
