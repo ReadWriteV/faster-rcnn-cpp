@@ -1,9 +1,6 @@
 {
 	"data": {
-		"dataset_path": "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/FoggyCityscapes/VOC2007",
-		"dataset_image_path": "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/FoggyCityscapes/VOC2007/JPEGImages",
-		"train_dataset_annotation_path": "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/libtorch-faster-rcnn/data/voc2007trainval.easy.json",
-		"test_dataset_annotation_path": "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/libtorch-faster-rcnn/data/voc2007test.easy.json",
+		"dataset_path": "/mnt/889cdd89-1094-48ae-b221-146ffe543605/wr/datasets/VOCdevkit/VOC2007",
 		"train_transforms": {
 			"img_scale": [
 				1000,
@@ -128,7 +125,7 @@
 				1024,
 				1024
 			],
-			"num_classes": 8,
+			"num_classes": 20,
 			"roi_feat_size": 7,
 			"roi_extractor_opts": {
 				"out_channels": 256,
@@ -203,6 +200,6 @@
 	"batch_size": 1,
 	"save_ckpt_period": 2,
 	"log_period": 100,
-	"work_dir": "FoggyCityscapes_r50fpn",
+	"work_dir": "voc_r50fpn",
 	"gpu": 2
 }
