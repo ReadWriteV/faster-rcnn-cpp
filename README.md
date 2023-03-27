@@ -41,7 +41,7 @@ batch size: 1, lr: 0.00125, decay epoch: 9 12, total epoch: 12
 | ---------- | -------- | ---------- |
 | ResNet50_FPN (this)  |  **0.439**   | 0.767 |
 | ResNet50_FPN (mmdet) | 0.437 | **0.769** |
-| ResNet50_FPN (base)  | 0.438 | 0.768|
+| [ResNet50_FPN](https://github.com/thisisi3/libtorch-faster-rcnn)  | 0.438 | 0.768|
 
 |    VOC 2007 Metric        | mAP |
 | ---------- | -------- |
