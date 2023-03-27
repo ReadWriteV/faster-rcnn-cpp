@@ -136,7 +136,7 @@ void COCODataset::transform(ExampleType &example, cv::Mat &image_data)
 
     // resize gt_bboxes
     example.target.gt_bboxes = example.target.gt_bboxes * scale_factor;
-    example.img_shape = std::vector<int64_t>({img.rows, img.cols});
+    example.img_shape = {img.rows, img.cols};
     example.scale_factor = scale_factor;
 
     // flip
