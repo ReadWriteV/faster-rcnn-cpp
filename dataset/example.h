@@ -16,7 +16,7 @@ struct DetectionExample
     {
         Target() = default;
         Target(torch::Tensor gt_bboxes, torch::Tensor gt_labels)
-            : gt_bboxes(std::move(gt_bboxes)), gt_labels(std::move(gt_labels))
+            : gt_bboxes{std::move(gt_bboxes)}, gt_labels{std::move(gt_labels)}
         {
         }
         Target &to(const torch::TensorOptions &opts)
@@ -32,7 +32,7 @@ struct DetectionExample
     using TargetType = Target;
 
     DetectionExample() = default;
-    DetectionExample(DataType data, TargetType target) : data(std::move(data)), target(std::move(target))
+    DetectionExample(DataType data, TargetType target) : data{std::move(data)}, target{std::move(target)}
     {
     }
 
@@ -44,7 +44,7 @@ struct DetectionExample
 
     DataType data;
     TargetType target;
-    std::vector<int64_t> img_shape;
+    std::vector<std::int64_t> img_shape;
     float scale_factor{-1.0};
     std::string id;
 };
