@@ -40,7 +40,6 @@ batch size: 1, lr: 0.00125, decay epoch: 9 12, total epoch: 12
 
 |    VOC 2007 Metric        | mAP |
 | ---------- | -------- |
-|  ResNet50_FPN (this)  |  0.7581   |
 |  VGG16 (this)  | 0.6798 |
 |[Original Paper](https://arxiv.org/abs/1506.01497)|0.699|
 |  [VGG16 (Pytorch)](https://github.com/jwyang/faster-rcnn.pytorch)  |  **0.701**   |
