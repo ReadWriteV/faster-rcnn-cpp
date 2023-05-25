@@ -10,8 +10,5 @@ build
 # Model Output Files
 output
 
-# Data Files
-data
-
 # Python Cache
 __pycache__
