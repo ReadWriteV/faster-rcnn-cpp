@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-project(faster_rcnn)
 
-set(CMAKE_PREFIX_PATH ../library)
+project(faster_rcnn CXX)
 
 find_package(Torch REQUIRED)
 find_package(TorchVision REQUIRED)
