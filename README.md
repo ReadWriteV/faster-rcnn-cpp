@@ -32,16 +32,15 @@ cmake --build build
 
 batch size: 1, lr: 0.00125, decay epoch: 9 12, total epoch: 12
 
-| COCO Metric | AP | AP50 |
+| ResNet50_FPN | AP | AP50 |
 | ---------- | -------- | ---------- |
-| ResNet50_FPN (this)  |  **0.439**   | 0.767 |
-| ResNet50_FPN (mmdet) | 0.437 | **0.769** |
+| this  |  **0.439**   | 0.767 |
+| mmdet | 0.437 | **0.769** |
 | [ResNet50_FPN](https://github.com/thisisi3/libtorch-faster-rcnn)  | 0.438 | 0.768|
 
-|    VOC 2007 Metric        | mAP |
+|    VGG16        | mAP |
 | ---------- | -------- |
-|  ResNet50_FPN (this)  |  0.7581   |
-|  VGG16 (this)  | 0.6798 |
+|  this  | 0.6798 |
 |[Original Paper](https://arxiv.org/abs/1506.01497)|0.699|
 |  [VGG16 (Pytorch)](https://github.com/jwyang/faster-rcnn.pytorch)  |  **0.701**   |
 
